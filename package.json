@@ -1,0 +1,22 @@
+{
+  "name": "aureon-travel",
+  "version": "1.0.0",
+  "description": "Aureon Travel - O'zbekiston bo'ylab eksklyuziv sayohatlar platformasi backend tizimi",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "keywords": [
+    "travel",
+    "uzbekistan",
+    "booking",
+    "api"
+  ],
+  "author": "Aureon Travel",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
+}

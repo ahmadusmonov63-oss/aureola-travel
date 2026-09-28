@@ -52,10 +52,21 @@
           <i class="fa-solid fa-pen-to-square text-[10px] text-amber-400 group-hover:scale-110 transition-transform"></i>
         </button>
 
+        <div id="backend-status-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300" title="Backend server ulanish holati">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" id="backend-dot"></span>
+          <span id="backend-status-text">Backend: Ulangan</span>
+        </div>
+
         <div id="telegram-status-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300">
           <span class="w-2.5 h-2.5 rounded-full bg-slate-500" id="telegram-dot"></span>
           <span id="telegram-status-text">Bot: Tekshirilmoqda</span>
         </div>
+
+        <!-- Asosiy saytga o'tish tugmasi -->
+        <a href="index.html" class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm" title="Mijozlar ko'radigan saytga o'tish">
+          <i class="fa-solid fa-globe text-xs"></i>
+          <span class="hidden sm:inline">Saytni ko'rish</span>
+        </a>
       </div>
     </div>
   </header>

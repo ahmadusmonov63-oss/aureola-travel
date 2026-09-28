@@ -1285,13 +1285,37 @@ async function handleBookingSubmit(event) {
     status: "Yangi"
   };
 
-  // 1. Saqlash
+  // 1. Backend API mavjud bo'lsa, avval markaziy bazaga yuborish
+  let sentToBackend = false;
+  try {
+    const apiUrl = getApiUrl('/api/bookings');
+    if (apiUrl) {
+      const resp = await fetch(apiUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newBooking)
+      });
+      if (resp.ok) {
+        const json = await resp.json();
+        if (json.booking && json.booking.id) {
+          newBooking.id = json.booking.id;
+        }
+        sentToBackend = true;
+      }
+    }
+  } catch (apiErr) {
+    console.warn("Backend API ulanmadi, lokal saqlanmoqda:", apiErr);
+  }
+
+  // 2. Lokal keshga ham saqlash
   const bookings = getStoredBookings();
   bookings.unshift(newBooking);
   saveBookings(bookings);
 
-  // 2. Telegramga yuborish
-  await sendTelegramNotification(newBooking);
+  // 3. Telegramga yuborish (agar serverdan yuborilmagan bo'lsa)
+  if (!sentToBackend) {
+    await sendTelegramNotification(newBooking);
+  }
 
   // 3. Muvaffaqiyat modalini ochish
   showBookingSuccessModal(newBooking);
@@ -1473,7 +1497,7 @@ function closeBookingLookupModal() {
   if (modal) modal.classList.add("hidden");
 }
 
-function searchGuestBooking() {
+async function searchGuestBooking() {
   const input = document.getElementById("lookup-search-input");
   const container = document.getElementById("lookup-results-container");
   if (!input || !container) return;
@@ -1485,14 +1509,31 @@ function searchGuestBooking() {
     return;
   }
 
-  const cleanDigits = query.replace(/\D/g, "");
-  const bookings = getStoredBookings();
-  const matched = bookings.filter(b => {
-    const idMatch = (b.id || "").toLowerCase().includes(query);
-    const phoneDigits = (b.guestPhone || "").replace(/\D/g, "");
-    const phoneMatch = cleanDigits.length >= 7 && phoneDigits.includes(cleanDigits);
-    return idMatch || phoneMatch;
-  });
+  container.innerHTML = `<div class="text-center p-4 text-xs text-slate-500"><i class="fa-solid fa-spinner fa-spin text-amber-500 mr-2"></i> Qidirilmoqda...</div>`;
+
+  let matched = [];
+  const apiUrl = getApiUrl(`/api/bookings/lookup?query=${encodeURIComponent(query)}`);
+  if (apiUrl) {
+    try {
+      const resp = await fetch(apiUrl);
+      if (resp.ok) {
+        matched = await resp.json();
+      }
+    } catch (e) {
+      console.warn("Backend lookup offline, lokal qidirilmoqda:", e);
+    }
+  }
+
+  if (!matched || matched.length === 0) {
+    const cleanDigits = query.replace(/\D/g, "");
+    const bookings = getStoredBookings();
+    matched = bookings.filter(b => {
+      const idMatch = (b.id || "").toLowerCase().includes(query);
+      const phoneDigits = (b.guestPhone || "").replace(/\D/g, "");
+      const phoneMatch = cleanDigits.length >= 7 && phoneDigits.includes(cleanDigits);
+      return idMatch || phoneMatch;
+    });
+  }
 
   if (matched.length === 0) {
     container.innerHTML = `

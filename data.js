@@ -1280,8 +1280,36 @@ const STORAGE_KEYS = {
   TELEGRAM: "aureon_travel_telegram",
   SETTINGS: "aureon_travel_settings",
   VERSION: "aureon_data_version",
-  LANG: "aureon_selected_language"
+  LANG: "aureon_selected_language",
+  BACKEND_URL: "aureon_backend_api_url"
 };
+
+// Backend API yordamchi funksiyalari
+function getBackendBaseUrl() {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.BACKEND_URL) || "";
+  } catch (e) {
+    return "";
+  }
+}
+
+function setBackendBaseUrl(url) {
+  try {
+    if (url) localStorage.setItem(STORAGE_KEYS.BACKEND_URL, url);
+    else localStorage.removeItem(STORAGE_KEYS.BACKEND_URL);
+  } catch (e) {}
+}
+
+function getApiUrl(endpoint) {
+  const customBase = getBackendBaseUrl();
+  if (customBase) {
+    return `${customBase.replace(/\/$/, '')}${endpoint}`;
+  }
+  if (typeof window !== "undefined" && window.location && window.location.protocol.startsWith('http')) {
+    return endpoint;
+  }
+  return null;
+}
 
 const DEFAULT_TELEGRAM = {
   botToken: "",

@@ -47,6 +47,80 @@ function loadData() {
   updateStats();
   renderBookingsTable();
   renderAdminTours();
+
+  // Markaziy backend server bilan sinxronlash
+  syncDataWithBackend();
+}
+
+async function syncDataWithBackend() {
+  const dot = document.getElementById("backend-dot");
+  const txt = document.getElementById("backend-status-text");
+
+  const bookingsApi = getApiUrl('/api/bookings');
+  let isBackendOnline = false;
+  if (bookingsApi) {
+    try {
+      const res = await fetch(bookingsApi);
+      if (res.ok) {
+        isBackendOnline = true;
+        const remoteBookings = await res.json();
+        if (Array.isArray(remoteBookings) && remoteBookings.length > 0) {
+          allBookings = remoteBookings;
+          saveBookings(allBookings);
+          updateStats();
+          renderBookingsTable();
+        }
+      }
+    } catch (e) {
+      console.log("Backend offline, lokal ma'lumotlar ishlatilmoqda");
+    }
+  }
+
+  if (dot && txt) {
+    if (isBackendOnline) {
+      dot.className = "w-2.5 h-2.5 rounded-full bg-emerald-400";
+      txt.textContent = "Backend: Ulangan (API)";
+    } else {
+      dot.className = "w-2.5 h-2.5 rounded-full bg-slate-400";
+      txt.textContent = "Backend: Lokal (Offline)";
+    }
+  }
+
+  // Turlarni backenddan sinxronlash
+  const toursApi = getApiUrl('/api/tours');
+  if (toursApi) {
+    try {
+      const res = await fetch(toursApi);
+      if (res.ok) {
+        const remoteTours = await res.json();
+        if (Array.isArray(remoteTours) && remoteTours.length > 0) {
+          allTours = remoteTours;
+          saveTours(allTours);
+          updateStats();
+          renderAdminTours();
+        }
+      }
+    } catch (e) {}
+  }
+
+  // Sozlamalarni backenddan sinxronlash
+  const settingsApi = getApiUrl('/api/settings/admin');
+  if (settingsApi) {
+    try {
+      const res = await fetch(settingsApi);
+      if (res.ok) {
+        const s = await res.json();
+        if (s.exchangeRate) {
+          saveExchangeRate(s.exchangeRate);
+          updateRateDisplay();
+        }
+        if (s.telegram && (s.telegram.botToken || s.telegram.chatId)) {
+          saveTelegramConfig(s.telegram);
+          setupTelegramConfig();
+        }
+      }
+    } catch (e) {}
+  }
 }
 
 function updateStats() {
@@ -498,8 +572,26 @@ async function applyStatusChangeAndNotify() {
   updateStats();
   renderBookingsTable();
 
-  // Telegram bot orqali kanalga/adminga holat o'zgargani haqida xabar berish
-  await sendStatusChangeToTelegramBot(booking, oldStatus);
+  // Backend API ga status yangilanishini yuborish
+  let sentToBackend = false;
+  const statusApi = getApiUrl(`/api/bookings/${booking.id}/status`);
+  if (statusApi) {
+    try {
+      const res = await fetch(statusApi, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: currentActionTargetStatus })
+      });
+      if (res.ok) sentToBackend = true;
+    } catch (e) {
+      console.warn("Backendga status yuborilmadi, brauzerdan yuboriladi:", e);
+    }
+  }
+
+  // Agar server orqali Telegramga yuborilmagan bo'lsa, brauzerdan yuborish
+  if (!sentToBackend) {
+    await sendStatusChangeToTelegramBot(booking, oldStatus);
+  }
 
   alert(`✅ Buyurtma holati "${currentActionTargetStatus}" deb saqlandi!\n\nMijoz ${booking.guestName} uchun xabarnoma tayyorlandi.`);
 

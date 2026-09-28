@@ -1,0 +1,852 @@
+{
+  "tours": [
+    {
+      "id": "toshkent",
+      "title": {
+        "uz": "Toshkent shahri bo'ylab sayohat",
+        "ru": "Тур по городу Ташкент",
+        "en": "Tashkent City Discovery Tour"
+      },
+      "subtitle": {
+        "uz": "Poytaxtning boy tarixi va zamonaviy qiyofasi",
+        "ru": "Богатая история и современный облик столицы",
+        "en": "Rich history and modern charm of the capital"
+      },
+      "badge": {
+        "uz": "Ommabop",
+        "ru": "Популярный",
+        "en": "Popular"
+      },
+      "badgeColor": "bg-emerald-500",
+      "location": {
+        "uz": "Toshkent shahri",
+        "ru": "Город Ташкент",
+        "en": "Tashkent City"
+      },
+      "basePricePerPerson": 350000,
+      "hotelPricePerNight": 450000,
+      "guidePricePerDay": 200000,
+      "mainImage": "https://upload.wikimedia.org/wikipedia/commons/e/e1/Khazrat_Imam_panorama.jpg",
+      "gallery": [
+        "https://upload.wikimedia.org/wikipedia/commons/e/e1/Khazrat_Imam_panorama.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/d/de/Minor_Mosque_Tashkent.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/4/47/Chorsu_Market_general_view.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/b/ba/Chorsu_Bazaar_in_Tashkent.jpg"
+      ],
+      "durationDays": [
+        1,
+        2,
+        3
+      ],
+      "highlights": {
+        "uz": [
+          "Hazrati Imom me'moriy majmuasi va Usmon Qur'oni",
+          "Sharqona Chorsu bozori va hunarmandlar rastalari",
+          "Toshkentning oq marmarli Minor masjidi",
+          "Magic City va Amir Temur xiyoboni",
+          "Toshkent teleminorasi va Milliy Taomlar markazi"
+        ],
+        "ru": [
+          "Архитектурный комплекс Хазрати Имам и Коран Усмана",
+          "Восточный базар Чорсу и ремесленные ряды",
+          "Беломраморная мечеть Минор",
+          "Парк Magic City и сквер Амира Темура",
+          "Ташкентская телебашня и Центр плова"
+        ],
+        "en": [
+          "Hazrati Imam Complex and ancient Uthman Quran",
+          "Chorsu Bazaar dome and authentic craft stalls",
+          "White marble Minor Mosque",
+          "Magic City Park & Amir Timur Square",
+          "Tashkent TV Tower and National Pilaf Center"
+        ]
+      },
+      "activities": {
+        "uz": [
+          "09:00 - Mehmonxonadan qulay konditsionerli transportda kutib olish",
+          "10:00 - Hazrati Imom me'moriy majmuasi va qadimiy Usmon Qur'oni ziyorati",
+          "12:00 - Chorsu bozorida sharqona shirinliklar, quruq mevalar va esdalik sovg'alar xaridi",
+          "13:30 - Toshkent osh markazida mashhur to'y oshi va milliy taomlar degustatsiyasi",
+          "15:00 - Oq marmarli go'zal Minor masjidi va Anhor bo'yida sayr",
+          "17:00 - Amir Temur xiyoboni va zamonaviy Magic City bog'ida dam olish",
+          "19:00 - Toshkent teleminorasi atrofida kechki shahar manzarasi va kechki ovqat"
+        ],
+        "ru": [
+          "09:00 - Встреча в отеле на комфортабельном автомобиле с кондиционером",
+          "10:00 - Экскурсия по комплексу Хазрати Имам и священному Корану Усмана",
+          "12:00 - Посещение базара Чорсу: восточные сладости, сухофрукты и сувениры",
+          "13:30 - Обед в центре плова: дегустация настоящего свадебного плова",
+          "15:00 - Прогулка у беломраморной мечети Минор вдоль набережной Анхора",
+          "17:00 - Сквер Амира Темура и отдых в парке Magic City",
+          "19:00 - Вечерняя панорама города у телебашни и ужин"
+        ],
+        "en": [
+          "09:00 - Hotel pickup in comfortable air-conditioned vehicle",
+          "10:00 - Visit Hazrati Imam architectural complex & sacred Uthman Quran",
+          "12:00 - Explore Chorsu Bazaar: Oriental spices, sweets & souvenirs",
+          "13:30 - Lunch at National Pilaf Center: Authentic Tashkent wedding pilaf",
+          "15:00 - Scenic walk along Minor Mosque and Ankhor canal embankment",
+          "17:00 - Amir Timur Square and leisure time at Magic City park",
+          "19:00 - Evening city panorama near Tashkent TV Tower and dinner"
+        ]
+      },
+      "sights": {
+        "uz": [
+          "O'rta Osiyodagi eng boy va qadimiy islom madaniyati markazlari bilan tanishasiz",
+          "Sharq bozori madaniyati, non turlari va milliy xaridlar muhitini his qilasiz",
+          "Poytaxtning zamonaviy va qadimiy me'morchiligiga guvoh bo'lasiz"
+        ],
+        "ru": [
+          "Познакомитесь с богатейшими центрами исламской культуры Центральной Азии",
+          "Окунетесь в колорит восточного базара и традиции национальной кухни",
+          "Увидите гармоничное сочетание древней и современной архитектуры"
+        ],
+        "en": [
+          "Explore rich Islamic architectural heritage of Central Asia",
+          "Experience vibrant atmosphere of traditional oriental bazaar",
+          "Witness stunning contrast between ancient heritage and modern metropolis"
+        ]
+      },
+      "included": {
+        "uz": [
+          "Shaxsiy konditsionerli transport / transfer",
+          "Barcha muzey va obidalarga kirish chiptalari",
+          "Salqin ichimliklar va milliy shirinliklar",
+          "Sayohat xaritasi va yo'lboshlovchi ma'lumotnomalar"
+        ],
+        "ru": [
+          "Персональный кондиционированный транспорт",
+          "Входные билеты во все музеи и памятники",
+          "Прохладительные напитки и национальные угощения",
+          "Карта маршрута и путеводитель"
+        ],
+        "en": [
+          "Private air-conditioned vehicle / transfer",
+          "Entry tickets to all monuments and museums",
+          "Bottled water, refreshments and national sweets",
+          "City route map and traveler guide"
+        ]
+      },
+      "notIncluded": {
+        "uz": [
+          "Shaxsiy esdalik sovg'alari xarajatlari",
+          "Gid xizmati (ixtiyoriy, buyurtmada tanlanadi)"
+        ],
+        "ru": [
+          "Личные сувениры и покупки",
+          "Услуги гида (по выбору при бронировании)"
+        ],
+        "en": [
+          "Personal souvenirs and shopping",
+          "Guide service (optional upon booking)"
+        ]
+      }
+    },
+    {
+      "id": "toglar",
+      "title": {
+        "uz": "Tog'li hududlar (Amirsoy, Chimyon, Chorvoq)",
+        "ru": "Горные курорты (Амирсой, Чимган, Чарвак)",
+        "en": "Mountain Resorts (Amirsoy, Chimgan, Charvak)"
+      },
+      "subtitle": {
+        "uz": "Maftunkor tabiat, toza havo va tog' kurortlari",
+        "ru": "Живописная природа, чистый воздух и горный отдых",
+        "en": "Breathtaking nature, crisp mountain air & alpine resorts"
+      },
+      "badge": {
+        "uz": "Tabiat & Dam olish",
+        "ru": "Природа и отдых",
+        "en": "Nature & Leisure"
+      },
+      "badgeColor": "bg-cyan-500",
+      "location": {
+        "uz": "Bo'stonliq tumani, Toshkent viloyati",
+        "ru": "Бостанлыкский район, Ташкентская область",
+        "en": "Bostanlyk district, Tashkent region"
+      },
+      "basePricePerPerson": 420000,
+      "hotelPricePerNight": 550000,
+      "guidePricePerDay": 200000,
+      "mainImage": "https://upload.wikimedia.org/wikipedia/commons/e/ec/Charvak_Reservoir.jpg",
+      "gallery": [
+        "https://upload.wikimedia.org/wikipedia/commons/e/ec/Charvak_Reservoir.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/b/be/Uzbekistan_Chimgan_Mountains.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/a/ac/Greater_Chimgan_Mountain.JPG",
+        "https://upload.wikimedia.org/wikipedia/commons/6/6e/Chimgan_ski.JPG"
+      ],
+      "durationDays": [
+        1,
+        2,
+        3,
+        4
+      ],
+      "highlights": {
+        "uz": [
+          "Ko'm-ko'k Chorvoq suv ombori bo'yida dam olish",
+          "Katta Chimyon tog' cho'qqilari va Beldersoy darasi",
+          "Amirsoy Mountain Resort - zamonaviy osma gondolalar",
+          "Tog' daryolari bo'yida xushmanzara milliy choyxonalar",
+          "Paraplanda uchish, kater va otda sayr qilish imkoniyati"
+        ],
+        "ru": [
+          "Бирюзовые воды Чарвакского водохранилища",
+          "Вершины Большого Чимгана и ущелье Бельдерсай",
+          "Курорт Amirsoy - современные гондольные канатные дороги",
+          "Аутентичные горные чайханы у кристальных рек",
+          "Катание на катерах, квадроциклах и прогулки на лошадях"
+        ],
+        "en": [
+          "Turquoise waters of scenic Charvak Reservoir",
+          "Majestic Greater Chimgan peaks and Beldersay valley",
+          "Amirsoy Mountain Resort modern cable gondolas",
+          "Traditional teahouses along mountain rivers",
+          "Boating, paragliding and horseback riding activities"
+        ]
+      },
+      "activities": {
+        "uz": [
+          "08:30 - Toshkentdan Bo'stonliq tog' tizmasiga yo'lga chiqish",
+          "10:00 - Amirsoy kurortiga yetib kelish, osma yo'lda cho'qqiga ko'tarilish (2290 metr)",
+          "12:00 - Tog' cho'qqisida foto-sessiya va musaffo tog' havosidan bahramand bo'lish",
+          "13:30 - Chorvoq bo'yida milliy qovurma baliq va tandir go'shti bilan tushlik",
+          "15:30 - Chorvoq suv omborida yaxta, kater va suv sportlari bilan tanishuv",
+          "17:30 - Chimyon vodiysi bo'ylab otda sayr yoki sokin tabiat qo'ynida dam olish",
+          "19:00 - Tog' oteliga joylashish yoki shahar sari qaytish"
+        ],
+        "ru": [
+          "08:30 - Выезд из Ташкента в сторону гор Бостанлыка",
+          "10:00 - Прибытие на курорт Amirsoy, подъем на канатке на вершину (2290 м)",
+          "12:00 - Фотосессия на вершине и наслаждение горным воздухом",
+          "13:30 - Обед на берегу Чарвака: свежая форель и традиционное горное мясо",
+          "15:30 - Прогулка на катере по Чарвакскому водохранилищу",
+          "17:30 - Конная прогулка по урочищу Чимган или отдых на природе",
+          "19:00 - Заселение в горный отель или возвращение в Ташкент"
+        ],
+        "en": [
+          "08:30 - Departure from hotel towards Bostanlyk mountain ranges",
+          "10:00 - Arrive at Amirsoy Resort, scenic gondola ride to the summit (2290m)",
+          "12:00 - Mountain peak panorama photoshoot and alpine air experience",
+          "13:30 - Lakefront lunch: famous Charvak fried trout and tandoor meat",
+          "15:30 - Boat cruise and leisure on Charvak lake",
+          "17:30 - Horseback riding in Chimgan valley or relaxation in nature",
+          "19:00 - Check-in at mountain lodge or return drive to Tashkent"
+        ]
+      },
+      "sights": {
+        "uz": [
+          "Chotqol tog' tizmasining go'zal panoramalari",
+          "Chorvoq suv omborining firuza rang suvlari va tog' archazorlari",
+          "Xalqaro andozalardagi eng yirik tog'-chang'i kurorti infratuzilmasi"
+        ],
+        "ru": [
+          "Захватывающие панорамы Чаткальского хребта",
+          "Бирюзовая гладь Чарвака и вековые реликтовые арчи",
+          "Инфраструктура современного горнолыжного курорта международного класса"
+        ],
+        "en": [
+          "Stunning panoramas of the Chatkal mountain ridge",
+          "Turquoise waters of Charvak lake and juniper forests",
+          "World-class modern alpine resort amenities"
+        ]
+      },
+      "included": {
+        "uz": [
+          "Barcha yo'l bo'ylab qulay transfer",
+          "Amirsoy kanat yo'liga kirish chiptasi",
+          "Mineral tog' suvlari va yengil tamaddi"
+        ],
+        "ru": [
+          "Комфортабельный трансфер на весь маршрут",
+          "Билет на канатную дорогу Amirsoy",
+          "Горная минеральная вода и легкий перекус"
+        ],
+        "en": [
+          "Comfortable transfer along whole route",
+          "Amirsoy cable car ticket",
+          "Mountain mineral water and light snacks"
+        ]
+      },
+      "notIncluded": {
+        "uz": [
+          "Paraplan va kater xizmatlari (ixtiyoriy)",
+          "Gid xizmati (ixtiyoriy)"
+        ],
+        "ru": [
+          "Катер и параплан (по желанию)",
+          "Услуги гида (по желанию)"
+        ],
+        "en": [
+          "Paragliding and speedboats (optional)",
+          "Guide service (optional)"
+        ]
+      }
+    },
+    {
+      "id": "zomin",
+      "title": {
+        "uz": "Zomin milliy tabiat bog'i",
+        "ru": "Национальный парк Заамин",
+        "en": "Zaamin National Park"
+      },
+      "subtitle": {
+        "uz": "O'zbekiston Shveytsariyasi va shifobaxsh archazorlar",
+        "ru": "Узбекская Швейцария и целебные хвойные леса",
+        "en": "Uzbek Switzerland & healing alpine pine forests"
+      },
+      "badge": {
+        "uz": "Ekoturizm",
+        "ru": "Экотуризм",
+        "en": "Ecotourism"
+      },
+      "badgeColor": "bg-green-600",
+      "location": {
+        "uz": "Jizzax viloyati, Zomin",
+        "ru": "Джизакская область, Заамин",
+        "en": "Jizzakh region, Zaamin"
+      },
+      "basePricePerPerson": 490000,
+      "hotelPricePerNight": 500000,
+      "guidePricePerDay": 200000,
+      "mainImage": "https://upload.wikimedia.org/wikipedia/commons/3/31/Zaamin_National_Park%2C_Uzbekistan.jpg",
+      "gallery": [
+        "https://upload.wikimedia.org/wikipedia/commons/3/31/Zaamin_National_Park%2C_Uzbekistan.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/d/de/Zomin_mountain-forest_state_reserve_naturee.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/d/de/Zomin_1.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/6/63/Zaamin_National_Park_Entrance%2C_Uzbekistan.jpg"
+      ],
+      "durationDays": [
+        1,
+        2,
+        3
+      ],
+      "highlights": {
+        "uz": [
+          "305 metr balandlikdagi mashhur Zomin osma shisha ko'prigi",
+          "Ming yillik boboyong'oq va qadimiy archazorlar",
+          "Shifobaxsh 'Sherbuloq' buloq suvlari",
+          "Sufi platosi va Zomin sharsharasi",
+          "Haqiqiy Zomin tandir go'shti tayyorlanish jarayoni"
+        ],
+        "ru": [
+          "Знаменитый стеклянный подвесной мост Заамина на высоте 305 метров",
+          "Тысячелетние ореховые деревья и реликтовые арчовые леса",
+          "Целебный горный источник 'Шербулок'",
+          "Плато Суфи и Зааминский водопад",
+          "Приготовление легендарного зааминского тандыр-кабоба"
+        ],
+        "en": [
+          "Famous 305-meter high Zaamin glass suspension bridge",
+          "Centuries-old walnut trees and pristine juniper groves",
+          "Healing natural spring waters of 'Sherbulok'",
+          "Sufi plateau and picturesque Zaamin waterfall",
+          "Authentic Zaamin tandoor roast meat culinary experience"
+        ]
+      },
+      "activities": {
+        "uz": [
+          "07:30 - Toshkentdan Zomin tog'lari sari manzarali yo'l bo'ylab jo'nash",
+          "10:30 - Zomin milliy bog'iga kirish, ignabargli toza archa havosidan nafas olish",
+          "11:30 - Mashhur Zomin Shisha ko'prigidan o'tish (adrenalin va fotolakatsiyalar)",
+          "13:30 - Zomin archazorlari ostida an'anaviy Zomin tandir kabobi bilan tushlik",
+          "15:30 - Sufi platosi, Zomin kanyonlari va sharsharaga piyoda ekosayohat",
+          "17:30 - Shifobaxsh Sherbuloq bulog'i va tog' asallari yarmarkasi",
+          "19:00 - Tog' mehmonxonasiga joylashish yoki shahar sari qaytish"
+        ],
+        "ru": [
+          "07:30 - Выезд из Ташкента по живописной трассе в Заамин",
+          "10:30 - Въезд в национальный парк, прогулка по хвойному лесу",
+          "11:30 - Прогулка по захватывающему Зааминскому стеклянному мосту",
+          "13:30 - Обед: знаменитый зааминский тандыр под сенью арчовых рощ",
+          "15:30 - Пеший эко-поход по плато Суфи, каньонам и к водопаду",
+          "17:30 - Посещение источника Шербулок и ярмарки горного меда",
+          "19:00 - Заселение в эко-отель или обратная дорога"
+        ],
+        "en": [
+          "07:30 - Departure from Tashkent along scenic highway to Zaamin",
+          "10:30 - Entry into national park, immerse in fresh alpine pine air",
+          "11:30 - Thrilling walk across Zaamin Glass Suspension Bridge",
+          "13:30 - Traditional lunch: famous Zaamin tandoor kebab under juniper shade",
+          "15:30 - Eco-trekking around Sufi plateau, mountain canyons and waterfall",
+          "17:30 - Visit healing Sherbulok mineral spring & local mountain honey market",
+          "19:00 - Mountain resort check-in or return journey"
+        ]
+      },
+      "sights": {
+        "uz": [
+          "Zomin tog'larining baland qoyalari va dara manzaralari",
+          "Noyob dorivor tog' o'simliklari va shifobaxsh iqlim",
+          "Markaziy Osiyodagi eng baland osma ko'priklardan biri"
+        ],
+        "ru": [
+          "Величественные скалы и глубокие каньоны Заамина",
+          "Уникальный лечебный микроклимат и высокогорные травы",
+          "Один из самых высоких подвесных мостов в Центральной Азии"
+        ],
+        "en": [
+          "Dramatic mountain gorges and alpine cliff panoramas",
+          "Renowned therapeutic mountain climate and rare medicinal herbs",
+          "One of Central Asia's highest architectural suspension bridges"
+        ]
+      },
+      "included": {
+        "uz": [
+          "Komfort avtotransport",
+          "Milliy parkka kirish to'lovlari",
+          "Shisha ko'prikka chiptalar"
+        ],
+        "ru": [
+          "Комфортный автотранспорт",
+          "Экологические сборы парка",
+          "Билеты на стеклянный мост"
+        ],
+        "en": [
+          "Comfortable private vehicle",
+          "National park entry fees",
+          "Glass bridge admission tickets"
+        ]
+      },
+      "notIncluded": {
+        "uz": [
+          "Ot ijarasi va shaxsiy xaridlar",
+          "Gid xizmati (ixtiyoriy)"
+        ],
+        "ru": [
+          "Аренда лошадей и личные покупки",
+          "Услуги гида (по желанию)"
+        ],
+        "en": [
+          "Horse rental and personal expenses",
+          "Guide service (optional)"
+        ]
+      }
+    },
+    {
+      "id": "samarqand",
+      "title": {
+        "uz": "Samarqand - Sharq durdonasi",
+        "ru": "Самарканд - Жемчужина Востока",
+        "en": "Samarkand - Pearl of the Orient"
+      },
+      "subtitle": {
+        "uz": "Buyuk ipak yo'lining yuragi va Temuriylar me'morchiligi",
+        "ru": "Сердце Великого шелкового пути и архитектура Тимуридов",
+        "en": "Heart of the Great Silk Road and Timurid Architecture"
+      },
+      "badge": {
+        "uz": "Tarix & Madaniyat",
+        "ru": "История и культура",
+        "en": "History & Culture"
+      },
+      "badgeColor": "bg-blue-600",
+      "location": {
+        "uz": "Samarqand viloyati",
+        "ru": "Самаркандская область",
+        "en": "Samarkand Region"
+      },
+      "basePricePerPerson": 550000,
+      "hotelPricePerNight": 500000,
+      "guidePricePerDay": 200000,
+      "mainImage": "https://upload.wikimedia.org/wikipedia/commons/0/00/Registan_square_Samarkand.jpg",
+      "gallery": [
+        "https://upload.wikimedia.org/wikipedia/commons/0/00/Registan_square_Samarkand.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/9/9d/Gur-e_Amir_03.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/b/b6/Registan_Samarkand_Uzbekistan.JPG",
+        "https://upload.wikimedia.org/wikipedia/commons/0/06/Gur-e_Amir_01.jpg"
+      ],
+      "durationDays": [
+        1,
+        2,
+        3
+      ],
+      "highlights": {
+        "uz": [
+          "Afsonaviy Registon maydoni (Ulug'bek, Sherdor, Tillakori madrasalari)",
+          "Sohibqiron Amir Temur va temuriylar maqbarasi (Go'ri Amir)",
+          "Mo'jizakor moviy koshinli Shohi Zinda nekropoli",
+          "Bibixonim masjidi va mashhur Siyob bozori",
+          "Mirzo Ulug'bek rasadxonasi va Samarqand noni"
+        ],
+        "ru": [
+          "Легендарная площадь Регистан (медресе Улугбека, Шердор, Тилля-Кари)",
+          "Мавзолей Амира Темура и династии Тимуридов (Гур-Эмир)",
+          "Некрополь Шахи Зинда с бирюзовой мозаикой",
+          "Мечеть Биби-Ханым и знаменитый Сиабский базар",
+          "Обсерватория Улугбека и знаменитые самаркандские лепешки"
+        ],
+        "en": [
+          "Legendary Registan Square (Ulugbek, Sher-Dor, Tillya-Kori madrasahs)",
+          "Mausoleum of Amir Timur and the Timurid dynasty (Gur-e-Amir)",
+          "Shah-i Zinda necropolis with turquoise tilework",
+          "Bibi-Khanym Mosque and lively Siab Bazaar",
+          "Ulugbek Observatory and iconic golden Samarkand bread"
+        ]
+      },
+      "activities": {
+        "uz": [
+          "08:00 - Afrosiyob tezyurar poyezdida yoki qulay transportda yetib kelish",
+          "09:30 - Go'ri Amir maqbarasini ziyorat qilish, Temuriylar saltanati tarixi bilan tanishuv",
+          "11:00 - Dunyoga mashhur Registon maydoniga ekskursiya va fotosessiya",
+          "13:00 - Samarqandning mashhur to'y oshi va milliy somsalari tushligi",
+          "14:30 - Shohi Zinda ziyoratgohi - moviy gumbazlar va qadimiy naqshlar siri",
+          "16:30 - Bibixonim masjidi va qizg'in Siyob bozorida issiq Samarqand nonlari xaridi",
+          "18:30 - Samarqand Boqiy Shahar (Silk Road Samarkand) majmuasida kechki sayr"
+        ],
+        "ru": [
+          "08:00 - Прибытие на скоростном поезде «Афросиаб» или комфортабельном транспорте",
+          "09:30 - Посещение усыпальницы Гур-Эмир, рассказ о величии империи Тимуридов",
+          "11:00 - Экскурсия и потрясающая фотосессия на площади Регистан",
+          "13:00 - Обед: знаменитый самаркандский плов и тандырная самса",
+          "14:30 - Мавзолейный комплекс Шахи Зинда — созвездие лазурных куполов",
+          "16:30 - Мечеть Биби-Ханым и дегустация лепешек на Сиабском базаре",
+          "18:30 - Вечерняя прогулка по комплексу «Вечный Город» (Silk Road Samarkand)"
+        ],
+        "en": [
+          "08:00 - Arrival via high-speed Afrosiyob train or comfortable vehicle",
+          "09:30 - Visit Gur-e-Amir mausoleum and discover the grandeur of Timur's empire",
+          "11:00 - Guided walking tour and photography at world-famous Registan Square",
+          "13:00 - Lunch: renowned Samarkand wedding pilaf and crisp tandoor somsa",
+          "14:30 - Shah-i Zinda necropolis — intricate cobalt mosaic masterpieces",
+          "16:30 - Bibi-Khanym Mosque and sampling warm bread at vibrant Siab Bazaar",
+          "18:30 - Evening leisure walk at 'Eternal City' (Silk Road Samarkand resort)"
+        ]
+      },
+      "sights": {
+        "uz": [
+          "XIV-XV asr Temuriylar davri me'morchiligining cho'qqisi",
+          "Dunyoda tengi yo'q ganchkorlik va koshinkorlik san'ati sirlari",
+          "Sharqona non pishirish sirlari va qadimiy Konigil ipak qog'ozi ustaxonasi"
+        ],
+        "ru": [
+          "Вершина исламской архитектуры эпохи Тимуридов XIV–XV веков",
+          "Уникальное искусство резного ганча, майолики и лазурной мозаики",
+          "Традиции шелкоткачества и старинная фабрика шелковой бумаги Конигил"
+        ],
+        "en": [
+          "Pinnacle of 14th-15th century Timurid imperial architecture",
+          "Incomparable majolica, gold gilding, and mosaic craftsmanship",
+          "Ancient Konigil mulberry paper mill and silk carpet weaving workshops"
+        ]
+      },
+      "included": {
+        "uz": [
+          "Barcha obidalarga kirish biletlari",
+          "Shahar ichidagi qulay transport",
+          "Samarqand choyi va shirinliklari"
+        ],
+        "ru": [
+          "Входные билеты во все памятники",
+          "Комфортабельный транспорт по городу",
+          "Самаркандский чай и восточные сладости"
+        ],
+        "en": [
+          "Admission tickets to all monuments",
+          "Intra-city private transportation",
+          "Samarkand herbal tea and local confections"
+        ]
+      },
+      "notIncluded": {
+        "uz": [
+          "Poyezd chiptalari (so'rovga ko'ra)",
+          "Gid xizmati (ixtiyoriy)"
+        ],
+        "ru": [
+          "Билеты на поезд (по запросу)",
+          "Услуги гида (по желанию)"
+        ],
+        "en": [
+          "Train tickets (available on request)",
+          "Guide service (optional)"
+        ]
+      }
+    },
+    {
+      "id": "buxoro",
+      "title": {
+        "uz": "Buxoroi Sharif - Qadimiy afsona",
+        "ru": "Благородная Бухара - Живая легенда",
+        "en": "Sacred Bukhara - Living Legend"
+      },
+      "subtitle": {
+        "uz": "2500 yillik tirik tarix, minoralar va savdo toqlari",
+        "ru": "2500 лет живой истории, минареты и торговые купола",
+        "en": "2500 years of living history, minarets & trading domes"
+      },
+      "badge": {
+        "uz": "UNESCO Merosi",
+        "ru": "Наследие ЮНЕСКО",
+        "en": "UNESCO Heritage"
+      },
+      "badgeColor": "bg-amber-600",
+      "location": {
+        "uz": "Buxoro viloyati",
+        "ru": "Бухарская область",
+        "en": "Bukhara Region"
+      },
+      "basePricePerPerson": 580000,
+      "hotelPricePerNight": 480000,
+      "guidePricePerDay": 200000,
+      "mainImage": "https://upload.wikimedia.org/wikipedia/commons/2/2a/Bukhara_Kalyan_minaret_from_the_south.jpg",
+      "gallery": [
+        "https://upload.wikimedia.org/wikipedia/commons/2/2a/Bukhara_Kalyan_minaret_from_the_south.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/b/be/Ark_fortress_in_Bukhara.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/a/a2/Bujar%C3%A1%2C_Liab-i-Hauz_1.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/6/67/Ark.Bukhara.jpg"
+      ],
+      "durationDays": [
+        2,
+        3,
+        4
+      ],
+      "highlights": {
+        "uz": [
+          "Minorai Kalon va Masjidi Kalon me'moriy ansambli",
+          "Buxoro amirlarining qadimiy qarorgohi - Ark qal'asi",
+          "Labi Hovuz ansambli va Nodir Devonbegi madrasasi",
+          "Chor Minor va Somoniylar maqbarasi",
+          "Qadimiy savdo toqlari (Toqi Zargaron, Toqi Telpakfurushon)"
+        ],
+        "ru": [
+          "Архитектурный ансамбль Пои-Калян и минарет Калян XII века",
+          "Цитадель Арк — древняя резиденция бухарских эмиров",
+          "Ансамбль Ляби-Хауз и медресе Нодир Диван-беги",
+          "Медресе Чор-Минор и мавзолей Саманидов",
+          "Старинные торговые купола (Токи Заргарон, Токи Саррофон)"
+        ],
+        "en": [
+          "Poi Kalyan complex and 12th-century Kalyan Minaret",
+          "Ark Citadel — ancient majestic fortress of Bukhara emirs",
+          "Lyabi-Khauz ensemble and centuries-old mulberry trees",
+          "Chor Minor Madrasah and 10th-century Samanid Mausoleum",
+          "Historic trading domes (Toqi Zargaron, Toqi Telpakfurushon)"
+        ]
+      },
+      "activities": {
+        "uz": [
+          "09:00 - Labi Hovuz majmuasidan piyoda sayohatni boshlash, asriy chinorlar soyasida hordiq",
+          "10:30 - Minorai Kalon va Mir Arab madrasasi bo'ylab chuqur me'moriy sayr",
+          "12:30 - Ark qal'asi muzeylari va amirlik taxt xonalari bilan tanishuv",
+          "14:00 - Buxoro an'anaviy palovi (Oshi so'fi) va gijduvon shashliklari bilan tushlik",
+          "15:30 - Qadimiy gumbazli savdo toqlarida zardo'zlik, pichoqchilik va gilam to'qish ustalari ustaxonalari",
+          "17:30 - Somoniylar maqbarasi va Chashmai Ayyub ziyoratgohi",
+          "19:30 - Labi Hovuz bo'yida jonli milliy musiqa va kechki ovqat"
+        ],
+        "ru": [
+          "09:00 - Начало пешей экскурсии от исторического пруда Ляби-Хауз",
+          "10:30 - Архитектурное величие ансамбля Пои-Калян и медресе Мири Араб",
+          "12:30 - Цитадель Арк: тронный зал, музейные залы и монетный двор эмира",
+          "14:00 - Обед: настоящий бухарский 'Оши Софи' и сочный гиждуванский шашлык",
+          "15:30 - Мастерские золотого шитья, чеканки и шелковых ковров под куполами",
+          "17:30 - Жемчужина кирпичного зодчества — мавзолей Саманидов",
+          "19:30 - Ужин с живой музыкой у вечернего пруда Ляби-Хауз"
+        ],
+        "en": [
+          "09:00 - Start scenic walking journey from historic Lyabi-Khauz pond",
+          "10:30 - Explore Poi-Kalyan ensemble and historic Mir-i Arab madrasah",
+          "12:30 - Ark Fortress: Royal throne rooms, coronation court & mint museum",
+          "14:00 - Traditional Bukharian lunch: 'Oshi Sofi' diet pilaf & Gijduvan kebabs",
+          "15:30 - Explore gold embroidery, knife smithing and silk carpet looms in domes",
+          "17:30 - Visit 10th-century Samanid brickwork mausoleum & Chashma Ayub spring",
+          "19:30 - Dinner by illuminated Lyabi-Khauz with atmospheric live music"
+        ]
+      },
+      "sights": {
+        "uz": [
+          "Islom olamining eng muqaddas va yaxlit saqlanib qolgan me'moriy ansambllari",
+          "Qadimiy mudofaa devorlari va amirlar harbiy qudrati",
+          "Zardo'zlik, kulolchilik va miniatyura san'atining tirik maktablari"
+        ],
+        "ru": [
+          "Один из наиболее полно сохранившихся средневековых городов Востока",
+          "Древняя фортификация и многовековые легенды эмиров",
+          "Живые школы бухарского золотого шитья, чеканки и миниатюры"
+        ],
+        "en": [
+          "One of the world's best-preserved authentic medieval Islamic cityscapes",
+          "Ancient brick fortifications, minarets and royal palaces",
+          "Living craft guilds: gold embroidery, ceramics and miniature painting"
+        ]
+      },
+      "included": {
+        "uz": [
+          "Tarixiy obidalarga kirish biletlari",
+          "Buxoro bo'ylab qulay transport",
+          "Ziravorli an'anaviy Buxoro choyi"
+        ],
+        "ru": [
+          "Входные билеты во все музеи и памятники",
+          "Комфортабельный транспорт по городу",
+          "Традиционный пряный бухарский чай"
+        ],
+        "en": [
+          "Admission tickets to all monuments",
+          "Private transport inside Bukhara",
+          "Traditional Bukhara spiced herbal tea"
+        ]
+      },
+      "notIncluded": {
+        "uz": [
+          "Tarixiy hammom va shaxsiy xaridlar",
+          "Gid xizmati (ixtiyoriy)"
+        ],
+        "ru": [
+          "Посещение старинных бань и сувениры",
+          "Услуги гида (по желанию)"
+        ],
+        "en": [
+          "Historic hammam bathhouse and shopping",
+          "Guide service (optional)"
+        ]
+      }
+    },
+    {
+      "id": "xorazm",
+      "title": {
+        "uz": "Xorazm (Xiva) - Tirik Ochiq Osmon Muzeyi",
+        "ru": "Хорезм (Хива) - Музей под открытым небом",
+        "en": "Khorezm (Khiva) - Open-Air Museum"
+      },
+      "subtitle": {
+        "uz": "Ertaknamo Ichan Qal'a va qadimiy Xorazm tamadduni",
+        "ru": "Сказочная Ичан-Кала и древняя цивилизация Хорезма",
+        "en": "Fairytale Ichan-Kala and ancient Khorezm civilization"
+      },
+      "badge": {
+        "uz": "Ertaknamo Shahar",
+        "ru": "Город-сказка",
+        "en": "Fairytale City"
+      },
+      "badgeColor": "bg-purple-600",
+      "location": {
+        "uz": "Xorazm viloyati, Xiva",
+        "ru": "Хорезмская область, Хива",
+        "en": "Khorezm Region, Khiva"
+      },
+      "basePricePerPerson": 650000,
+      "hotelPricePerNight": 480000,
+      "guidePricePerDay": 200000,
+      "mainImage": "https://upload.wikimedia.org/wikipedia/commons/c/c7/Kalta_Minor%2C_Khiva%2C_Uzbekistan.jpg",
+      "gallery": [
+        "https://upload.wikimedia.org/wikipedia/commons/c/c7/Kalta_Minor%2C_Khiva%2C_Uzbekistan.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/b/bb/Le_minaret_Islam_Khodja_%28Khiva%2C_Ouzb%C3%A9kistan%29_%285586414709%29.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/2/28/Kalta_Minor_Khiva_2012.jpg",
+        "https://upload.wikimedia.org/wikipedia/commons/7/74/Kalta_Minor.jpg"
+      ],
+      "durationDays": [
+        2,
+        3,
+        4
+      ],
+      "highlights": {
+        "uz": [
+          "UNESCO ro'yxatidagi yaxlit qadimiy shahar - Ichan Qal'a",
+          "Afsonaviy Kalta Minor va Islom Xo'ja minorasi",
+          "Ko'hna Ark saroyi va Xiva xonlari zali",
+          "218 ta o'ymakor yog'och ustunli Juma masjidi",
+          "Xorazm lazgisi, mashhur Shivit oshi va Tuxumbarak taomlari"
+        ],
+        "ru": [
+          "Ичан-Кала — единственный полностью сохранившийся город-крепость ЮНЕСКО",
+          "Изумрудный минарет Кальта-Минар и стройный минарет Ислам-Ходжа",
+          "Дворец Куня-Арк и парадные покои хивинских ханов",
+          "Джума-мечеть с 218 резными деревянными колоннами",
+          "Зажигательный танец Лазги, суп Шивит Оши и блюдо Тухум Барак"
+        ],
+        "en": [
+          "UNESCO World Heritage living fortress city — Ichan-Kala",
+          "Turquoise-tiled Kalta Minor and towering Islam Khodja minarets",
+          "Kunya-Ark Citadel and royal state reception rooms of Khiva khans",
+          "Juma Mosque featuring 218 unique hand-carved wooden pillars",
+          "Enchanting Khorezm Lazgi dance, green dill pasta & Tukhum Barak delicacies"
+        ]
+      },
+      "activities": {
+        "uz": [
+          "09:00 - Ichan Qal'aning Ota Darvozasidan kirib, ertaklar olamiga sayohat boshlanishi",
+          "10:00 - Kalta Minor, Muhammad Aminxon madrasasi va Ko'hna Ark bo'ylab sayr",
+          "12:00 - 218 ta betakror naqshli ustunlarga ega Juma masjidini ziyorat qilish",
+          "13:30 - Xorazmning betakror taomlari: Shivit oshi, Tuxumbarak va qovurma baliq tushligi",
+          "15:30 - Toshhovli saroyi, haramxona va Islom Xo'ja minorasining eng baland nuqtasiga chiqish",
+          "17:30 - Xiva mudofaa devorlari ustida quyosh botishini tomosha qilish (eng ajoyib fotolokatsiya)",
+          "19:30 - Ko'hna Ark maydonida jonli Xorazm Lazgisi va folklor kechasi"
+        ],
+        "ru": [
+          "09:00 - Вход через Ворота Ата-Дарваза: путешествие в восточную сказку",
+          "10:00 - Знакомство с Кальта-Минар, медресе Мухаммад Амин-хана и Куня-Арк",
+          "12:00 - Посещение уникальной Джума-мечети с резными колоннами",
+          "13:30 - Аутентичный обед: хорезмский Шивит Оши, Тухум Барак и жареный судак",
+          "15:30 - Дворец Таш-Хаули, гарем и подъем на смотровую минарета Ислам-Ходжа",
+          "17:30 - Закат на глинобитных крепостных стенах Ичан-Калы (лучшие фото)",
+          "19:30 - Фольклорный вечер и зажигательные танцы Лазги в ханском дворце"
+        ],
+        "en": [
+          "09:00 - Enter via Ata-Darvaza gate: step directly into a 1001 nights fairytale",
+          "10:00 - Marvel at Kalta Minor, Muhammad Amin Khan madrasah & Kunya-Ark",
+          "12:00 - Visit hypnotic Juma Mosque with its 218 unique carved wooden pillars",
+          "13:30 - Authentic culinary lunch: emerald Shivit Oshi, Tukhum Barak dumplings",
+          "15:30 - Tosh-Hovli stone palace, royal harem & climb Islam Khodja minaret",
+          "17:30 - Watch breathtaking sunset from historic mudbrick ramparts of Ichan-Kala",
+          "19:30 - Evening folklore performance and rhythmic Khorezm Lazgi dance"
+        ]
+      },
+      "sights": {
+        "uz": [
+          "Ming yillar davomida asl holatini yo'qotmagan yagona shahar-qal'a",
+          "Xorazm yog'och o'ymakorligi va ganch naqqoshligining yuksak durdonalari",
+          "Qadimiy Xorazm xonlarining davlat boshqaruvi va maishiy hayoti"
+        ],
+        "ru": [
+          "Единственный полностью уцелевший средневековый город-крепость Востока",
+          "Шедевры хорезмской резьбы по дереву, майолики и настенной росписи",
+          "История древнего государства Хорезмшахов и быт хивинских ханов"
+        ],
+        "en": [
+          "The world's only completely intact ancient mudbrick fortress city",
+          "Masterpieces of Khorezm wood carving, ceramic tiles and royal architecture",
+          "Fascinating insights into the courtly life and traditions of Khiva Khans"
+        ]
+      },
+      "included": {
+        "uz": [
+          "Ichan Qal'aning barcha 50 dan ortiq obidalariga kirish kartasi",
+          "Konditsionerli qulay shaxsiy transport",
+          "Folklor konsertiga maxsus joy"
+        ],
+        "ru": [
+          "Единый билет на все 50+ музеев и памятников Ичан-Калы",
+          "Комфортабельный транспорт с кондиционером",
+          "Места на фольклорный концерт Лазги"
+        ],
+        "en": [
+          "All-inclusive admission pass to all 50+ sites inside Ichan-Kala",
+          "Air-conditioned private transport",
+          "Reserved seating at evening folklore show"
+        ]
+      },
+      "notIncluded": {
+        "uz": [
+          "Minora cho'qqisiga alohida ko'tarilish chiptasi",
+          "Gid xizmati (ixtiyoriy)"
+        ],
+        "ru": [
+          "Отдельный подъем на вершину минарета",
+          "Услуги гида (по желанию)"
+        ],
+        "en": [
+          "Separate climb to minaret summit lookout",
+          "Guide service (optional)"
+        ]
+      }
+    }
+  ],
+  "bookings": [],
+  "settings": {
+    "exchangeRate": 12800,
+    "telegram": {
+      "botToken": "",
+      "chatId": "",
+      "enabled": false
+    },
+    "adminPassword": "admin"
+  }
+}

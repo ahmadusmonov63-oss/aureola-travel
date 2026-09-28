@@ -1,72 +1,68 @@
-# 🏨 Grand Hotel Tour Desk - Sayohat va Tur Bron Qilish Tizimi
+# ✈️ Aureon Travel - Sayyohlik Platformasi va Backend Tizimi
 
-Mehmonxona mehmonlari uchun eksklyuziv sayohat turlarini tashkil qilish va boshqarish veb-platformasi.
-
----
-
-## 🌟 Tizim Imkoniyatlari
-
-### 1. 👥 Mexmonlar Uchun Sayt (`index.html`)
-* **6 ta Maxsus Yo'nalish:**
-  1. **Toshkent shahri bo'ylab** (Poytaxtning boy tarixi va zamonaviy qiyofasi)
-  2. **Tog'li hududlar** (Amirsoy, Chimyon, Chorvoq)
-  3. **Zomin milliy tabiat bog'i** (O'zbekiston Shveytsariyasi, 305m shisha ko'prik)
-  4. **Samarqand** (Sharq durdonasi, Registon maydoni)
-  5. **Buxoroi Sharif** (2500 yillik tirik afsona, Minorai Kalon)
-  6. **Xorazm (Xiva)** (Tirik ochiq osmon muzeyi, Ichan Qal'a)
-* **Batafsil Modal Oyna:**
-  * Har bir shahar bo'yicha boy rasmlar galereyasi.
-  * U joyda nimalar bilan band bo'lishi (soatbay reja: ekskursiyalar, taomlar, hordiq).
-  * Nimalar bilan tanishishi (tarixiy obidalar, diqqatga sazovor joylar).
-  * Kiritilgan va kiritilmagan xizmatlar.
-* **Onlayn Bron Qilish va Kalkulyator:**
-  * Sayohatchilar soni (Kattalar va Bolalar).
-  * Safar davomiyligi (1 kunlik, 2 kun / 1 kecha, 3 kun / 2 kecha, 4 kun / 3 kecha).
-  * **Otel varianti:** Agar 1 kecha yoki undan ko'p bo'lsa — **"Otel bilan birga"** yoki **"Otelsiz"** tanlash imkoni!
-  * Mexmon ma'lumotlari: Ismi-familiyasi, telefon raqami, xona raqami, gid tili va qo'shimcha istaklar.
-  * Real vaqtda to'liq narx hisoblab beriladi.
+O'zbekiston bo'ylab eksklyuziv sayohat turlarini bron qilish, markaziy ma'lumotlar bazasi va Telegram bot integratsiyasiga ega to'liq fullstack platforma.
 
 ---
 
-### 2. 🛡 Admin Boshqaruv Markazi (`admin.html`)
-* **Arizalar Nazorati:**
-  * Kelib tushgan barcha buyurtmalar ro'yxati (real vaqtda yangilanadi).
-  * Statuslar: `Yangi`, `Tasdiqlangan`, `Bekor qilingan`.
-  * Qidiruv va saralash (ism, telefon, ID bo'yicha).
-  * JSON zaxira nusxasini yuklab olish.
-* **Turlar va Narxlarni Tahrirlash:**
-  * Istalgan turning 1 kishi uchun asosiy narxini o'zgartirish.
-  * 1 kechalik otel narxini o'zgartirish.
-  * Rasmlar, dasturlar va ma'lumotlarni o'zgartirish.
-  * Yangi turlar qo'shish imkoniyati.
-* **Telegram Bot Integratsiyasi:**
-  * Bot Token va Chat ID-ni kiritish va saqlash.
-  * "Test Xabar" tugmasi orqali botni bir zumda tekshirish.
+## 🏗 Backend Tizimi Arxitekturasi
+
+Platforma uchun **REST API** backend tizimi to'liq ishlab chiqildi:
+* **Fayllar:** `server.js` (Node.js Express) va `server.rb` (Ruby WEBrick)
+* **Ma'lumotlar bazasi:** `data/db.json` (barcha buyurtmalar, turlar va sozlamalar markaziy JSON bazada saqlanadi)
+* **Xavfsizlik:** Telegram Bot tokeni serverda saqlanadi, so'rovlar server orqali HTTPS orqali yuboriladi.
+
+### REST API Endpointlari:
+
+| Metod | Endpoint | Tavsif |
+|---|---|---|
+| `GET` | `/api/status` | Server holatini tekshirish (Health check) |
+| `GET` | `/api/tours` | Barcha turlar ro'yxatini olish |
+| `POST` | `/api/tours` | Yangi tur qo'shish yoki tahrirlash |
+| `DELETE` | `/api/tours/:id` | Turni o'chirish |
+| `GET` | `/api/bookings` | Barcha arizalar (Admin uchun) |
+| `GET` | `/api/bookings/lookup?query=...` | Mehmon arizasini tekshirish (ID yoki Tel) |
+| `POST` | `/api/bookings` | Yangi buyurtma qabul qilish va Telegramga yuborish |
+| `PATCH` | `/api/bookings/:id/status` | Ariza holatini yangilash (Tasdiqlash/Bekor qilish) |
+| `DELETE` | `/api/bookings/:id` | Arizani o'chirish |
+| `GET` | `/api/settings` | Ommaviy sozlamalar (Valyuta kursi) |
+| `GET` | `/api/settings/admin` | To'liq sozlamalar (Telegram bot tokeni va h.k.) |
+| `POST` | `/api/settings` | Sozlamalarni yangilash |
+| `POST` | `/api/telegram/test` | Telegram bot ulanishini sinovdan o'tkazish |
 
 ---
 
-## 🚀 Ishga Tushirish Usullari
+## 🚀 Ishga Tushirish
 
-### Usul 1: Brauzerda To'g'ridan-to'g'ri Ochish
-Siz hech qanday qo'shimcha dastur o'rnatmasdan ham fayllarni to'g'ridan-to'g'ri brauzeringizda (Safari, Chrome) ochishingiz mumkin:
-* **Mexmonlar sayti:** `tur_loyiha/index.html` faylini oching.
-* **Admin paneli:** `tur_loyiha/admin.html` faylini oching.
+### 1-usul. O'z kompyuteringizda (Lokal)
+Mac-da terminalni ochib, loyiha papkasiga o'ting:
 
-### Usul 2: Mahalliy Server Orqali (Tavsiya etiladi)
-VS Code yoki Mac terminalingizda loyiha papkasiga kirib, quyidagi buyruqni bering:
 ```bash
+# Ruby orqali (Mac-da darhol, qo'shimcha o'rnatishlarsiz ishlaydi):
 ruby server.rb
+
+# Yoki Node.js orqali (agar Node.js o'rnatilgan bo'lsa):
+npm install
+npm start
 ```
-Shunda quyidagi manzillarda sayt ishga tushadi:
-* Mexmon sayti: `http://localhost:3000/index.html`
-* Admin sayti: `http://localhost:3000/admin.html`
+
+Server ishga tushgach:
+* 🌐 **Bosh sahifa:** `http://localhost:3000/index.html`
+* 📝 **Bron qilish:** `http://localhost:3000/booking.html`
+* 🔐 **Admin panel:** `http://localhost:3000/admin.html`
 
 ---
 
-## 🤖 Telegram Botni Ulash (3 Qadam)
+## ☁️ Internetga Bepul Joylashtirish (Render.com / Railway)
 
-1. Telegramda **@BotFather** botiga kiring va `/newbot` buyrug'ini yozing. Bot nomini kiriting va sizga berilgan **Bot Token**ni nusxalab oling.
-2. Botga kirib `/start` bosing. O'z shaxsiy profilingiz yoki administratsiya guruhingizning **Chat ID** raqamini bilish uchun **@userinfobot** dan foydalaning.
-3. Admin panelidagi (`admin.html`) **Telegram Bot Sozlamalari** bo'limiga Token va Chat ID ni kiriting va **"Saqlash"** hamda **"Test Xabar"** tugmasini bosing!
+Saytni istalgan qurilmadan (telefon, planshet) ishlatish uchun:
 
-Har safar yangi buyurtma tushganda barcha ma'lumotlar bir soniya ichida Telegramingizga keladi!
+1. **GitHub repozitoriy yarating** va barcha fayllarni yuklang.
+2. **[Render.com](https://render.com)** ga bepul kiring va **New Web Service** tugmasini bosing.
+3. GitHub repozitoriyingizni tanlang:
+   - **Environment:** `Node`
+   - **Build Command:** `npm install`
+   - **Start Command:** `node server.js`
+4. **Deploy** tugmasini bosing. 
+5. 1 daqiqada sizga doimiy ishlaydigan online manzil beriladi (masalan: `https://aureon-travel.onrender.com`).
+   - Mehmonlar sayti: `https://aureon-travel.onrender.com/`
+   - Siz uchun admin: `https://aureon-travel.onrender.com/admin.html`
