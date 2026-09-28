@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aureon Travel | O'zbekiston Bo'ylab Eksklyuziv Turlar</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            },
+            gold: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glass-card {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+    }
+    .hero-bg {
+      background: linear-gradient(180deg, rgba(8, 47, 73, 0.8) 0%, rgba(15, 23, 42, 0.92) 100%), 
+                  url('https://upload.wikimedia.org/wikipedia/commons/0/00/Registan_square_Samarkand.jpg');
+      background-size: cover;
+      background-position: center;
+    }
+    .smooth-scroll {
+      scroll-behavior: smooth;
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 antialiased font-sans smooth-scroll min-h-screen flex flex-col">
+
+  <!-- TOP HEADER / NAVBAR (MEXMON SAYTI) -->
+  <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between gap-2">
+      
+      <!-- Logo & Aureon Travel Brand -->
+      <a href="index.html" class="flex items-center gap-3 group shrink-0">
+        <div class="w-11 h-11 sm:w-12 sm:h-12 rounded-xl bg-gradient-to-tr from-brand-800 via-brand-600 to-amber-500 flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+          <i class="fa-solid fa-plane-departure text-lg sm:text-xl"></i>
+        </div>
+        <div>
+          <span class="text-[9px] sm:text-[10px] uppercase tracking-widest text-amber-600 font-extrabold block" data-i18n="brandSub">Exclusive Tours & Concierge</span>
+          <h1 class="text-lg sm:text-2xl font-black text-slate-900 leading-none tracking-tight">Aureon Travel</h1>
+        </div>
+      </a>
+
+      <!-- Language Switcher & Actions -->
+      <div class="flex items-center gap-2 sm:gap-4">
+        
+        <!-- 3 TA TIL SWITCHER (UZ, RU, EN) -->
+        <div class="flex items-center bg-slate-100 rounded-xl p-1 border border-slate-200 shadow-inner">
+          <button onclick="setLanguage('uz')" id="lang-btn-uz" class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5" title="O'zbek tili">
+            <span>🇺🇿</span> <span class="hidden sm:inline">O'z</span>
+          </button>
+          <button onclick="setLanguage('ru')" id="lang-btn-ru" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5" title="Русский язык">
+            <span>🇷🇺</span> <span class="hidden sm:inline">Рус</span>
+          </button>
+          <button onclick="setLanguage('en')" id="lang-btn-en" class="px-2.5 py-1 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5" title="English language">
+            <span>🇬🇧</span> <span class="hidden sm:inline">Eng</span>
+          </button>
+        </div>
+
+        <a href="#tours-section" class="hidden md:inline-flex items-center gap-2 text-xs sm:text-sm font-semibold text-slate-600 hover:text-brand-600 transition-colors">
+          <i class="fa-solid fa-compass text-amber-500"></i>
+          <span data-i18n="navTours">Barcha Turlar</span>
+        </a>
+
+        <!-- Buyurtma holatini tekshirish -->
+        <button onclick="openBookingLookupModal()" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold text-slate-700 hover:text-amber-600 hover:bg-slate-100 transition-all border border-slate-200 shadow-sm">
+          <i class="fa-solid fa-receipt text-amber-500"></i>
+          <span data-i18n="navMyBooking">Buyurtma holati</span>
+        </button>
+
+        <a href="booking.html" class="inline-flex items-center gap-1.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-slate-950 font-bold text-xs sm:text-sm px-3.5 sm:px-4 py-2 rounded-xl shadow-md transition-all hover:scale-105">
+          <i class="fa-solid fa-calendar-check text-xs"></i>
+          <span data-i18n="navBook">Bron Qilish</span>
+        </a>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="hero-bg text-white py-16 md:py-24 px-4 sm:px-6 lg:px-8 relative">
+    <div class="max-w-4xl mx-auto text-center">
+      <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-amber-300 text-xs sm:text-sm font-semibold mb-6">
+        <i class="fa-solid fa-gem"></i> <span data-i18n="heroBadge">Aureon Travel — Sayohatlaringizning ishonchli hamrohi</span>
+      </div>
+      <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight mb-4 leading-tight" data-i18n="heroTitle">
+        O'zbekistonning Eng Go'zal Shaharlari va Tabiatini Kiring
+      </h2>
+      <p class="text-base sm:text-lg text-slate-200 max-w-2xl mx-auto mb-8 font-light leading-relaxed" data-i18n="heroDesc">
+        Siz uchun maxsus 6 ta asosiy yo'nalish: Toshkent poytaxti, Amirsoy va Chimyon tog'lari, go'zal Zomin tabiati hamda qadimiy Samarqand, Buxoro va Xiva!
+      </p>
+
+      <div class="flex flex-wrap items-center justify-center gap-4">
+        <a href="#tours-section" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-base shadow-lg transition-transform hover:-translate-y-0.5">
+          <span data-i18n="btnExplore">Yo'nalishlarni Ko'rish</span>
+          <i class="fa-solid fa-arrow-down"></i>
+        </a>
+        <a href="booking.html" class="inline-flex items-center gap-2 px-6 py-3.5 rounded-xl bg-white/15 hover:bg-white/25 backdrop-blur-md text-white border border-white/30 font-semibold text-base transition-colors">
+          <i class="fa-solid fa-calculator text-amber-400"></i>
+          <span data-i18n="btnCalc">Narxni Hisoblash</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADVANTAGES -->
+  <section class="bg-white border-b border-slate-200 py-6">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+        <div class="p-3">
+          <i class="fa-solid fa-van-shuttle text-2xl text-brand-600 mb-2"></i>
+          <h4 class="font-bold text-slate-900 text-sm" data-i18n="advTransfer">Mehmonxonadan Transfer</h4>
+          <p class="text-xs text-slate-500" data-i18n="advTransferSub">Eshik oldidan olib ketish</p>
+        </div>
+        <div class="p-3">
+          <i class="fa-solid fa-user-tie text-2xl text-amber-500 mb-2"></i>
+          <h4 class="font-bold text-slate-900 text-sm" data-i18n="advGuide">Gid Xizmati (Tanlov asosida)</h4>
+          <p class="text-xs text-slate-500" data-i18n="advGuideSub">Gid bilan yoki mustaqil sayr</p>
+        </div>
+        <div class="p-3">
+          <i class="fa-solid fa-bed text-2xl text-emerald-600 mb-2"></i>
+          <h4 class="font-bold text-slate-900 text-sm" data-i18n="advHotel">Otel Bilan / Otelsiz</h4>
+          <p class="text-xs text-slate-500" data-i18n="advHotelSub">Ixtiyoriy qulay tunash</p>
+        </div>
+        <div class="p-3">
+          <i class="fa-solid fa-shield-halved text-2xl text-indigo-600 mb-2"></i>
+          <h4 class="font-bold text-slate-900 text-sm" data-i18n="advSafe">100% Xavfsiz Safar</h4>
+          <p class="text-xs text-slate-500" data-i18n="advSafeSub">Aureon Travel kafolati</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- MAIN TOURS SECTION (FIRST THING GUEST SEES) -->
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 w-full">
+    
+    <div id="tours-section" class="scroll-mt-24 mb-10 text-center">
+      <span class="text-xs font-bold text-brand-600 tracking-wider uppercase bg-brand-50 px-3 py-1 rounded-full border border-brand-100" data-i18n="toursTag">
+        Aureon Travel Turlari
+      </span>
+      <h2 class="text-2xl sm:text-4xl font-extrabold text-slate-900 mt-2 mb-3" data-i18n="toursTitle">
+        Biz Taklif Qilayotgan Maxsus Turlar
+      </h2>
+      <p class="text-slate-600 max-w-2xl mx-auto text-sm sm:text-base" data-i18n="toursDesc">
+        O'zingizga ma'qul bo'lgan shaharni tanlang. Batafsil ma'lumot olish uchun kartochka ustiga bosing — nimalar bilan band bo'lishingiz, nimalarni ko'rishingiz va fotosuratlarni tomosha qiling.
+      </p>
+    </div>
+
+    <!-- TOURS GRID (6 DESTINATIONS) -->
+    <div id="tours-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+      <!-- Rendered dynamically by app.js in selected language -->
+    </div>
+
+    <!-- CALL TO ACTION: SEPARATE LUXURY BOOKING PORTAL -->
+    <section class="mt-20 scroll-mt-24">
+      <div class="bg-gradient-to-br from-slate-900 via-brand-950 to-slate-900 rounded-3xl shadow-2xl p-8 sm:p-12 lg:p-16 text-white border border-slate-700 text-center relative overflow-hidden">
+        <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-amber-500/10 rounded-full blur-3xl pointer-events-none"></div>
+        <div class="absolute -left-20 -top-20 w-80 h-80 bg-brand-500/10 rounded-full blur-3xl pointer-events-none"></div>
+
+        <div class="relative z-10 max-w-3xl mx-auto">
+          <span class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-xs font-bold mb-4" data-i18n="bookingTag">
+            Aureon Travel Bron Qilish
+          </span>
+          <h2 class="text-2xl sm:text-4xl font-black mb-4 tracking-tight leading-tight" data-i18n="ctaTitle">
+            O'zbekiston Bo'ylab Unutilmas Sayohatga Tayyormisiz?
+          </h2>
+          <p class="text-slate-300 text-sm sm:text-base mb-8 max-w-2xl mx-auto leading-relaxed" data-i18n="ctaDesc">
+            Turlardan birini tanlang va bir necha soniyada o'zingizga qulay formatda buyurtma bering.
+          </p>
+          <div class="flex flex-wrap items-center justify-center gap-4">
+            <a href="booking.html" class="inline-flex items-center gap-3 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-600 hover:to-amber-600 text-slate-950 font-black text-sm sm:text-base px-8 py-4 rounded-2xl shadow-xl transition-all transform hover:scale-105 active:scale-95">
+              <i class="fa-solid fa-calendar-check text-lg"></i>
+              <span data-i18n="ctaBtn">Sayohatni Bron Qilish Sahifasi ➔</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: FULL TOUR DETAILS & MORE PICTURES -->
+  <div id="tour-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/80 backdrop-blur-sm p-4 sm:p-6 lg:p-10 flex items-center justify-center">
+    <div class="relative bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] overflow-y-auto shadow-2xl border border-slate-200">
+      
+      <!-- Modal Close Button -->
+      <button onclick="closeTourModal()" class="absolute top-4 right-4 z-10 w-10 h-10 rounded-full bg-slate-900/60 hover:bg-slate-900 text-white flex items-center justify-center transition-all">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <!-- Modal Content Container -->
+      <div id="modal-content">
+        <!-- Rendered dynamically in selected language -->
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: SUCCESS CONFIRMATION -->
+  <div id="success-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="bg-white rounded-3xl max-w-md w-full p-8 text-center shadow-2xl border border-slate-200">
+      <div class="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 mx-auto flex items-center justify-center text-3xl mb-4">
+        <i class="fa-solid fa-check"></i>
+      </div>
+      <h3 class="text-2xl font-black text-slate-900 mb-2" data-i18n="successTitle">Buyurtmangiz Qabul Qilindi!</h3>
+      <p class="text-sm text-slate-600 mb-6" id="success-modal-msg" data-i18n="successDesc">
+        So'rovingiz Aureon Travel tizimiga yetib keldi. Tez orada menejerimiz siz bilan bog'lanib, barcha tafsilotlarni tasdiqlaydi.
+      </p>
+      <div class="bg-slate-50 border border-slate-200 rounded-xl p-4 text-left text-xs space-y-1.5 text-slate-700 mb-6" id="success-modal-details">
+        <!-- Filled dynamically -->
+      </div>
+      <button onclick="closeSuccessModal()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3 rounded-xl transition-all" data-i18n="successBtn">
+        Tushunarli, Rahmat!
+      </button>
+    </div>
+  </div>
+
+  <!-- FOOTER -->
+  <footer class="bg-slate-900 text-slate-400 py-10 border-t border-slate-800 mt-12 text-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-lg bg-amber-500 text-slate-950 flex items-center justify-center font-bold">
+            <i class="fa-solid fa-plane-departure text-base"></i>
+          </div>
+          <div>
+            <div class="text-white font-bold">Aureon Travel</div>
+            <div class="text-xs text-slate-400" data-i18n="footerDesc">O'zbekiston bo'ylab premium sayohat xizmati</div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-6 text-xs text-slate-500">
+          <span>&copy; 2026 Aureon Travel. <span data-i18n="footerRights">Barcha huquqlar himoyalangan.</span></span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL: GUEST BOOKING LOOKUP (STATUS CHECKING) -->
+  <div id="booking-lookup-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-receipt text-amber-500"></i>
+          <span data-i18n="myBookingTitle">Buyurtma Holatini Tekshirish</span>
+        </h3>
+        <button onclick="closeBookingLookupModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <p class="text-xs text-slate-500 mb-4" data-i18n="myBookingDesc">
+        Buyurtma raqamingiz (ID) yoki bron paytida ko'rsatgan telefon raqamingizni kiriting:
+      </p>
+
+      <div class="flex gap-2 mb-4">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+          <input type="text" id="lookup-search-input" placeholder="Masalan: BK-123456 yoki +998901234567" data-i18n-ph="phBookingSearch" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-3 py-2.5 text-xs sm:text-sm font-medium focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none transition-all">
+        </div>
+        <button onclick="searchGuestBooking()" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold px-4 py-2.5 rounded-xl text-xs flex items-center gap-1.5 transition-all shadow-sm shrink-0">
+          <i class="fa-solid fa-search"></i>
+          <span data-i18n="btnCheckBooking">Tekshirish</span>
+        </button>
+      </div>
+
+      <!-- Result Container -->
+      <div id="lookup-results-container" class="space-y-3 max-h-[60vh] overflow-y-auto">
+        <!-- Rendered dynamically -->
+      </div>
+
+      <div class="mt-5 pt-3 border-t border-slate-100 flex justify-end">
+        <button onclick="closeBookingLookupModal()" class="px-5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+          Yopish
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Scripts (v4.0 - 3 tilda: UZ, RU, EN) -->
+  <script src="data.js?v=4.0"></script>
+  <script src="app.js?v=4.0"></script>
+</body>
+</html>

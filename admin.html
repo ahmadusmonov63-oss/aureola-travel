@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aureon Travel | Admin Boshqaruv Markazi</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0f9ff',
+              100: '#e0f2fe',
+              500: '#0284c7',
+              600: '#0369a1',
+              700: '#075985',
+              800: '#0c4a6e',
+              900: '#082f49'
+            }
+          }
+        }
+      }
+    }
+  </script>
+</head>
+<body class="bg-slate-100 text-slate-800 antialiased font-sans min-h-screen flex flex-col">
+
+  <!-- ADMIN NAVBAR (ALOHIDA BOSHQARUV TIZIMI) -->
+  <header class="bg-slate-900 text-white border-b border-slate-800 sticky top-0 z-40 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white flex items-center justify-center font-black text-xl shadow">
+          <i class="fa-solid fa-plane-departure text-base"></i>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase tracking-widest text-amber-400 font-bold block">Aureon Travel</span>
+          <h1 class="text-base sm:text-lg font-bold text-white leading-none">Admin Boshqaruv Markazi</h1>
+        </div>
+      </div>
+
+      <!-- Dollar Kursi & Telegram Status Indicator -->
+      <div class="flex items-center gap-3">
+        <!-- Dollar Kursi Quick Widget -->
+        <button type="button" onclick="openRateModal()" class="flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 border border-amber-500/40 text-amber-300 transition-all cursor-pointer shadow-sm group" title="Dollar kursini o'zgartirish uchun bosing">
+          <i class="fa-solid fa-dollar-sign text-emerald-400"></i>
+          <span>1 USD = <span id="header-rate-display" class="text-white font-extrabold">12,800</span> UZS</span>
+          <i class="fa-solid fa-pen-to-square text-[10px] text-amber-400 group-hover:scale-110 transition-transform"></i>
+        </button>
+
+        <div id="telegram-status-badge" class="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-medium bg-slate-800 border border-slate-700 text-slate-300">
+          <span class="w-2.5 h-2.5 rounded-full bg-slate-500" id="telegram-dot"></span>
+          <span id="telegram-status-text">Bot: Tekshirilmoqda</span>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN ADMIN CONTAINER -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full flex-1">
+    
+    <!-- STATS OVERVIEW CARDS -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+      
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Yangi Arizalar</span>
+          <div class="text-3xl font-black text-amber-600 mt-1" id="stat-pending-count">0</div>
+          <span class="text-[11px] text-slate-400">Ko'rib chiqish kutilmoqda</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-amber-100 text-amber-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-bell"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Tasdiqlangan</span>
+          <div class="text-3xl font-black text-emerald-600 mt-1" id="stat-confirmed-count">0</div>
+          <span class="text-[11px] text-slate-400">Qabul qilingan turlar</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Jami Buyurtmalar</span>
+          <div class="text-3xl font-black text-slate-900 mt-1" id="stat-total-count">0</div>
+          <span class="text-[11px] text-slate-400">Barcha arizalar tarixi</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-blue-100 text-blue-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-clipboard-list"></i>
+        </div>
+      </div>
+
+      <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex items-center justify-between">
+        <div>
+          <span class="text-xs font-semibold text-slate-500 uppercase tracking-wider block">Faol Turlar</span>
+          <div class="text-3xl font-black text-slate-900 mt-1" id="stat-tours-count">6</div>
+          <span class="text-[11px] text-slate-400">Aureon Travel yo'nalishlari</span>
+        </div>
+        <div class="w-12 h-12 rounded-xl bg-purple-100 text-purple-600 flex items-center justify-center text-xl">
+          <i class="fa-solid fa-map-location-dot"></i>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ADMIN TABS NAVIGATION -->
+    <div class="flex items-center gap-2 border-b border-slate-200 mb-6 overflow-x-auto pb-1">
+      <button onclick="switchTab('tab-bookings')" id="btn-tab-bookings" class="px-5 py-2.5 rounded-t-xl font-bold text-sm transition-all flex items-center gap-2 border-b-2 border-amber-500 text-amber-600 bg-white">
+        <i class="fa-solid fa-inbox"></i>
+        <span>Kelib Tushgan Buyurtmalar</span>
+        <span class="bg-amber-100 text-amber-700 text-xs px-2 py-0.5 rounded-full font-black" id="tab-badge-pending">0</span>
+      </button>
+
+      <button onclick="switchTab('tab-tours')" id="btn-tab-tours" class="px-5 py-2.5 rounded-t-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/50">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Turlar va Narxlarni Boshqarish</span>
+      </button>
+
+      <button onclick="switchTab('tab-telegram')" id="btn-tab-telegram" class="px-5 py-2.5 rounded-t-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/50">
+        <i class="fa-brands fa-telegram text-sky-500"></i>
+        <span>Telegram Bot Sozlamalari</span>
+      </button>
+
+      <button onclick="switchTab('tab-currency')" id="btn-tab-currency" class="px-5 py-2.5 rounded-t-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/50">
+        <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
+        <span>Valyuta Kursi ($ USD)</span>
+      </button>
+    </div>
+
+    <!-- TAB 1: KELIB TUSHGAN BUYURTMALAR (BOOKINGS) -->
+    <section id="tab-bookings" class="space-y-4">
+      
+      <!-- Filter and Actions Toolbar -->
+      <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+        
+        <!-- Filter Buttons -->
+        <div class="flex items-center gap-2 w-full sm:w-auto overflow-x-auto">
+          <button onclick="filterBookings('all')" class="booking-filter-btn px-3.5 py-1.5 rounded-lg text-xs font-bold bg-slate-900 text-white" data-filter="all">Barchasi</button>
+          <button onclick="filterBookings('Yangi')" class="booking-filter-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" data-filter="Yangi">Yangi</button>
+          <button onclick="filterBookings('Tasdiqlandi')" class="booking-filter-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" data-filter="Tasdiqlandi">Tasdiqlangan</button>
+          <button onclick="filterBookings('Bekor qilindi')" class="booking-filter-btn px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200" data-filter="Bekor qilindi">Bekor qilingan</button>
+        </div>
+
+        <!-- Search & Export -->
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <div class="relative flex-1 sm:w-64">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="booking-search-input" oninput="handleBookingSearch()" placeholder="Ism, telefon yoki ID..." class="w-full bg-slate-50 border border-slate-200 rounded-xl pl-8 pr-3 py-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <button onclick="exportBookingsJSON()" class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors" title="Zaxirani yuklab olish">
+            <i class="fa-solid fa-download"></i>
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Bookings Table Container -->
+      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse text-xs sm:text-sm">
+            <thead>
+              <tr class="bg-slate-50 border-b border-slate-200 text-slate-500 uppercase text-[11px] font-bold tracking-wider">
+                <th class="p-4">ID & Vaqt</th>
+                <th class="p-4">Mehmon Ma'lumotlari</th>
+                <th class="p-4">Tanlangan Tur</th>
+                <th class="p-4">Davomiyligi & Otel</th>
+                <th class="p-4">Gid Xizmati</th>
+                <th class="p-4">Hisob (Narx)</th>
+                <th class="p-4">Holat (Status)</th>
+                <th class="p-4 text-right">Amallar</th>
+              </tr>
+            </thead>
+            <tbody id="bookings-table-body" class="divide-y divide-slate-100">
+              <!-- Rendered dynamically -->
+            </tbody>
+          </table>
+        </div>
+
+        <div id="bookings-empty-state" class="hidden p-12 text-center text-slate-400">
+          <i class="fa-solid fa-inbox text-4xl mb-3 text-slate-300"></i>
+          <p class="text-sm font-semibold">Hozircha arizalar mavjud emas</p>
+          <p class="text-xs text-slate-400 mt-1">Mehmonlar sayti orqali yangi bron qilinganda shu yerda ko'rinadi.</p>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- TAB 2: TURLAR VA NARXLARNI BOSHQARISH (TOURS & PRICES) -->
+    <section id="tab-tours" class="hidden space-y-6">
+      
+      <div class="flex items-center justify-between bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+        <div>
+          <h3 class="text-base font-bold text-slate-900">Aureon Travel Turlar Ro'yxati</h3>
+          <p class="text-xs text-slate-500">Har bir turning narxlarini, rasmlarini va dasturlarini tahrirlashingiz mumkin</p>
+        </div>
+        <div class="flex items-center gap-2">
+          <button onclick="resetToursToDefault()" class="px-3.5 py-2 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-600 text-xs font-semibold transition-colors">
+            <i class="fa-solid fa-rotate-left mr-1"></i> Standart holatga qaytarish
+          </button>
+          <button onclick="openNewTourModal()" class="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-bold transition-all shadow-sm">
+            <i class="fa-solid fa-plus mr-1"></i> Yangi Tur Qo'shish
+          </button>
+        </div>
+      </div>
+
+      <!-- Tours Cards Grid -->
+      <div id="admin-tours-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <!-- Filled dynamically -->
+      </div>
+
+    </section>
+
+    <!-- TAB 3: TELEGRAM BOT SOZLAMALARI -->
+    <section id="tab-telegram" class="hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Form Container -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+            <div class="w-12 h-12 rounded-xl bg-sky-500 text-white flex items-center justify-center text-2xl shadow">
+              <i class="fa-brands fa-telegram"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Telegram Bot Bildirishnoma Tizimi</h3>
+              <p class="text-xs text-slate-500">Saytda har bir yangi buyurtma tushganda avtomatik Telegramingizga keladi</p>
+            </div>
+          </div>
+
+          <form id="telegram-form" onsubmit="handleSaveTelegramConfig(event)" class="space-y-5">
+            
+            <div>
+              <label for="tg-bot-token" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Telegram Bot Token *
+              </label>
+              <input type="text" id="tg-bot-token" placeholder="Masalan: 7123456789:AAFxY-abcdefg12345678" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <p class="text-[11px] text-slate-400 mt-1">@BotFather orqali olingan bot tokeni (kiritilishi bilan avtomatik saqlanadi)</p>
+            </div>
+
+            <div>
+              <label for="tg-chat-id" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                Chat ID yoki Guruh ID *
+              </label>
+              <input type="text" id="tg-chat-id" placeholder="Masalan: 123456789 yoki -1001234567890" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:outline-none">
+              <p class="text-[11px] text-slate-400 mt-1">@userinfobot bergan o'z ID raqamingiz yoki guruh ID raqami (kiritilishi bilan avtomatik saqlanadi)</p>
+            </div>
+
+            <div>
+              <label for="usd-exchange-rate" class="block text-xs font-bold text-slate-700 uppercase mb-1 flex items-center gap-1.5">
+                <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
+                <span>Dollar kursi (1 USD = ? UZS) *</span>
+              </label>
+              <div class="flex items-center gap-3">
+                <input type="number" id="usd-exchange-rate" min="1000" max="50000" step="50" value="12800" class="w-48 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-xs sm:text-sm font-bold text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:outline-none">
+                <span class="text-xs text-slate-500 font-medium">so'm (Saytdagi dollar va so'm hisob-kitoblari uchun)</span>
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center gap-3">
+              <button type="submit" class="bg-sky-600 hover:bg-sky-700 text-white font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Sozlamalarni Saqlash</span>
+              </button>
+
+              <button type="button" onclick="testTelegramConnection()" id="btn-test-telegram" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane text-sky-500"></i>
+                <span>Test Xabar Yuborish</span>
+              </button>
+
+              <div id="tg-autosave-indicator" class="text-xs text-emerald-600 font-bold flex items-center gap-1.5 transition-all opacity-0 ml-auto">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Avtomatik saqlandi</span>
+              </div>
+            </div>
+
+            <div id="telegram-test-result" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+
+          </form>
+        </div>
+
+        <!-- 3-Step Guide Card -->
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-between">
+          <div>
+            <h4 class="text-sm font-black text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-lightbulb"></i>
+              <span>3 Qadamda Botingizni Ulang:</span>
+            </h4>
+
+            <div class="space-y-4 text-xs text-slate-300">
+              <div class="flex gap-3">
+                <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0">1</span>
+                <div>
+                  <strong class="text-white">Bot yarating:</strong>
+                  Telegramda <code class="text-amber-300 bg-slate-950/60 px-1.5 py-0.5 rounded">@BotFather</code> ga kiring, <code class="text-amber-300 bg-slate-950/60 px-1.5 py-0.5 rounded">/newbot</code> deb yozing va berilgan tokenni oling.
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0">2</span>
+                <div>
+                  <strong class="text-white">Chat ID ni oling:</strong>
+                  O'zingiz yaratgan botga kirib <code class="text-amber-300 bg-slate-950/60 px-1.5 py-0.5 rounded">/start</code> bosing. So'ngra <code class="text-amber-300 bg-slate-950/60 px-1.5 py-0.5 rounded">@userinfobot</code> ga kirib, o'z ID raqamingizni bilib oling.
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0">3</span>
+                <div>
+                  <strong class="text-white">Tekshiring:</strong>
+                  Token va Chat ID-ni chapdagi maydonlarga qo'yib, <strong>"Test Xabar"</strong> tugmasini bosing!
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-700/50 text-[11px] text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-shield-halved text-emerald-400"></i>
+            <span>Barcha xabarlar shifrlangan va xavfsiz holda Telegram API orqali yetkaziladi.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- TAB 4: VALYUTA KURSI BOSHQARUVI (CURRENCY) -->
+    <section id="tab-currency" class="hidden space-y-6">
+      
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        
+        <!-- Left: Currency Manager Card (8 cols) -->
+        <div class="lg:col-span-8 bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-6">
+          
+          <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div class="w-12 h-12 rounded-xl bg-emerald-100 text-emerald-600 flex items-center justify-center text-2xl font-bold">
+              <i class="fa-solid fa-dollar-sign"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-black text-slate-900">Dollar Kursini Yangilash va Boshqarish</h3>
+              <p class="text-xs text-slate-500">Bu yerda o'rnatilgan kurs saytning barcha joylarida va Telegram bildirishnomalarda darhol amal qiladi</p>
+            </div>
+          </div>
+
+          <!-- Current Rate Hero Box -->
+          <div class="bg-gradient-to-br from-emerald-500/10 via-emerald-50 to-slate-50 border border-emerald-200 rounded-2xl p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div>
+              <span class="text-xs font-bold uppercase tracking-wider text-emerald-800 block mb-1">Hozirgi Faol Valyuta Kursi</span>
+              <div class="text-3xl sm:text-4xl font-black text-emerald-700 tracking-tight">
+                1 USD = <span id="current-active-rate-text">12,800</span> UZS
+              </div>
+              <span class="text-xs text-slate-500 mt-1 block">Status: <span id="rate-last-updated-text" class="font-semibold text-slate-700">Faol qo'llanilmoqda</span></span>
+            </div>
+            
+            <button type="button" onclick="fetchLiveCbuRate()" id="btn-cbu-fetch" class="bg-white hover:bg-emerald-50 text-emerald-700 border border-emerald-300 font-bold text-xs px-4 py-2.5 rounded-xl shadow-sm transition-all flex items-center gap-2">
+              <i class="fa-solid fa-cloud-arrow-down text-emerald-600"></i>
+              <span>Markaziy Bank Kursini Olish</span>
+            </button>
+          </div>
+
+          <!-- Rate Setting Form -->
+          <form onsubmit="handleUpdateExchangeRate(event)" class="space-y-4">
+            <div>
+              <label for="currency-tab-rate-input" class="block text-xs font-bold text-slate-700 uppercase mb-2">
+                Yangi Dollar Kursi (1 USD = necha so'm?) *
+              </label>
+              <div class="flex items-center gap-3">
+                <div class="relative w-64">
+                  <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">$</span>
+                  <input type="number" id="currency-tab-rate-input" min="1000" max="50000" step="10" required class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-8 pr-4 py-3 text-lg font-black text-slate-900 focus:ring-2 focus:ring-emerald-500 focus:bg-white focus:outline-none transition-all">
+                </div>
+                <span class="text-sm font-bold text-slate-700">UZS (so'm)</span>
+              </div>
+            </div>
+
+            <!-- Quick adjustment pills -->
+            <div>
+              <span class="text-xs font-semibold text-slate-500 block mb-2">Tezkor tanlovlar:</span>
+              <div class="flex flex-wrap gap-2">
+                <button type="button" onclick="setQuickRate(12700)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-xs font-bold transition-all">12,700</button>
+                <button type="button" onclick="setQuickRate(12750)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-xs font-bold transition-all">12,750</button>
+                <button type="button" onclick="setQuickRate(12800)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-xs font-bold transition-all">12,800</button>
+                <button type="button" onclick="setQuickRate(12850)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-xs font-bold transition-all">12,850</button>
+                <button type="button" onclick="setQuickRate(12900)" class="px-3 py-1.5 rounded-lg border border-slate-200 bg-slate-50 hover:bg-emerald-50 hover:border-emerald-400 text-xs font-bold transition-all">12,900</button>
+                <button type="button" onclick="adjustRateBy(50)" class="px-3 py-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all">+50 so'm</button>
+                <button type="button" onclick="adjustRateBy(-50)" class="px-3 py-1.5 rounded-lg border border-rose-200 bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition-all">-50 so'm</button>
+              </div>
+            </div>
+
+            <!-- Submit Button & Feedback -->
+            <div class="pt-4 border-t border-slate-100 flex items-center gap-4">
+              <button type="submit" class="bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm px-7 py-3 rounded-xl transition-all shadow-md flex items-center gap-2">
+                <i class="fa-solid fa-check text-base"></i>
+                <span>Kursni Saqlash va Qo'llash</span>
+              </button>
+              <div id="currency-save-status" class="hidden text-xs font-bold text-emerald-700 bg-emerald-100 px-3 py-2 rounded-xl"></div>
+            </div>
+          </form>
+
+        </div>
+
+        <!-- Right: Real-time Preview / Converter Sandbox (4 cols) -->
+        <div class="lg:col-span-4 bg-slate-900 text-white rounded-2xl p-6 shadow-sm border border-slate-800 space-y-4">
+          <h4 class="text-sm font-black text-amber-400 uppercase tracking-wider flex items-center gap-2">
+            <i class="fa-solid fa-calculator"></i>
+            <span>Jonli Valyuta Sinovi</span>
+          </h4>
+          <p class="text-xs text-slate-300">
+            Kurs o'zgarganda saytdagi turlarning narxi avtomatik tarzda quyidagicha aylanadi:
+          </p>
+
+          <div class="space-y-3 pt-2 text-xs">
+            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
+              <span class="text-slate-300">350 000 so'm (Toshkent turi):</span>
+              <strong id="preview-tashkent" class="text-amber-400 font-extrabold text-sm">$27</strong>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
+              <span class="text-slate-300">450 000 so'm (Mehmonxona):</span>
+              <strong id="preview-hotel" class="text-amber-400 font-extrabold text-sm">$35</strong>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
+              <span class="text-slate-300">200 000 so'm (Gid xizmati):</span>
+              <strong id="preview-guide" class="text-amber-400 font-extrabold text-sm">$16</strong>
+            </div>
+            <div class="p-3 rounded-xl bg-slate-800/80 border border-slate-700 flex justify-between items-center">
+              <span class="text-slate-300">1 500 000 so'm (Standart hisob):</span>
+              <strong id="preview-grand" class="text-emerald-400 font-extrabold text-base">$117</strong>
+            </div>
+          </div>
+
+          <div class="mt-4 pt-3 border-t border-slate-800 text-[11px] text-slate-400">
+            <i class="fa-solid fa-circle-info text-amber-400 mr-1"></i>
+            <span>Mehmon sayti har doim ushbu kurs bo'yicha aniq yaxlitlab ko'rsatadi.</span>
+          </div>
+        </div>
+
+      </div>
+
+    </section>
+
+  </div>
+
+  <!-- MODAL: EDIT / CREATE TOUR -->
+  <div id="tour-edit-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/80 backdrop-blur-sm p-4 sm:p-6 flex items-center justify-center">
+    <div class="bg-white rounded-3xl max-w-2xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 max-h-[90vh] overflow-y-auto">
+      
+      <div class="flex items-center justify-between pb-4 border-b border-slate-100 mb-6">
+        <h3 class="text-lg font-bold text-slate-900" id="tour-edit-modal-title">Turni Tahrirlash</h3>
+        <button onclick="closeTourEditModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form id="tour-edit-form" onsubmit="handleSaveTourEdit(event)" class="space-y-4 text-xs sm:text-sm">
+        <input type="hidden" id="edit-tour-id">
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase text-xs mb-1">Tur Sarlavhasi *</label>
+          <input type="text" id="edit-tour-title" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase text-xs mb-1">Qisqacha Tavsif (Subtitle) *</label>
+          <input type="text" id="edit-tour-subtitle" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block font-bold text-slate-700 uppercase text-xs mb-1">Joylashuv (Shahar) *</label>
+            <input type="text" id="edit-tour-location" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+          <div>
+            <label class="block font-bold text-slate-700 uppercase text-xs mb-1">Yorliq (Badge)</label>
+            <input type="text" id="edit-tour-badge" placeholder="Masalan: Ommabop, Tavsiya etiladi" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <!-- 3 TA NARX BLOKI: Asosiy, Otel, Gid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-amber-50 p-4 rounded-xl border border-amber-200">
+          <div>
+            <label class="block font-bold text-amber-900 uppercase text-[11px] mb-1">Asosiy narx / 1 kishi (so'm) *</label>
+            <input type="number" id="edit-tour-price-base" min="10000" step="10000" required class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs">
+          </div>
+          <div>
+            <label class="block font-bold text-amber-900 uppercase text-[11px] mb-1">Otel narxi / 1 kecha (so'm) *</label>
+            <input type="number" id="edit-tour-price-hotel" min="10000" step="10000" required class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs">
+          </div>
+          <div>
+            <label class="block font-bold text-amber-900 uppercase text-[11px] mb-1">Gid narxi / 1 kun (so'm) *</label>
+            <input type="number" id="edit-tour-price-guide" min="0" step="10000" required class="w-full bg-white border border-amber-300 rounded-xl px-3 py-2 font-bold focus:ring-2 focus:ring-amber-500 focus:outline-none text-xs">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase text-xs mb-1">Asosiy Rasm URL manzili *</label>
+          <input type="url" id="edit-tour-main-image" required class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          <p class="text-[11px] text-slate-400 mt-1">Istalgan yangi rasm havolasini (URL) qo'yishingiz mumkin</p>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase text-xs mb-1">Galereya Rasmlari URL (har biri yangi qatorda)</label>
+          <textarea id="edit-tour-gallery" rows="3" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+
+        <div>
+          <label class="block font-bold text-slate-700 uppercase text-xs mb-1">Reja va nimalar bilan band bo'lishi (har biri yangi qatorda)</label>
+          <textarea id="edit-tour-activities" rows="4" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"></textarea>
+        </div>
+
+        <div class="pt-4 border-t border-slate-100 flex items-center justify-end gap-3">
+          <button type="button" onclick="closeTourEditModal()" class="px-5 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold transition-colors">
+            Bekor qilish
+          </button>
+          <button type="submit" class="px-6 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold transition-all shadow-sm">
+            Saqlash
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: BOOKING DETAIL MODAL -->
+  <div id="booking-detail-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="bg-white rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base font-bold text-slate-900" id="bdetail-title">Ariza Tafsilotlari</h3>
+        <button onclick="closeBookingDetailModal()" class="w-8 h-8 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <div id="bdetail-body" class="space-y-3 text-xs sm:text-sm"></div>
+
+      <div class="mt-6 pt-4 border-t border-slate-100 flex justify-end">
+        <button onclick="closeBookingDetailModal()" class="px-5 py-2 rounded-xl bg-slate-900 text-white font-bold text-xs">
+          Yopish
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: QUICK RATE EDIT (Header or anywhere click) -->
+  <div id="rate-edit-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base font-bold text-slate-900 flex items-center gap-2">
+          <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
+          <span>Dollar Kursini Yangilash</span>
+        </h3>
+        <button onclick="closeRateModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <form onsubmit="handleQuickRateModalSubmit(event)" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-slate-600 uppercase mb-1">
+            1 USD kursi (so'mda) *
+          </label>
+          <div class="relative">
+            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-base">$</span>
+            <input type="number" id="modal-rate-input" min="1000" max="50000" step="10" required class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-8 pr-4 py-3 text-lg font-black text-slate-900 focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+        </div>
+
+        <div>
+          <span class="text-[11px] font-semibold text-slate-500 block mb-1.5">Tezkor tanlovlar:</span>
+          <div class="flex flex-wrap gap-2">
+            <button type="button" onclick="setModalQuickRate(12750)" class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all">12,750</button>
+            <button type="button" onclick="setModalQuickRate(12800)" class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all">12,800</button>
+            <button type="button" onclick="setModalQuickRate(12850)" class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all">12,850</button>
+            <button type="button" onclick="setModalQuickRate(12900)" class="px-2.5 py-1 rounded-lg border border-slate-200 text-xs font-bold bg-slate-50 hover:bg-emerald-50 hover:border-emerald-300 transition-all">12,900</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+          <button type="button" onclick="closeRateModal()" class="w-full bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold py-2.5 rounded-xl text-xs transition-all">
+            Bekor qilish
+          </button>
+          <button type="submit" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2.5 rounded-xl text-xs shadow-md transition-all">
+            Saqlash
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL: GUEST NOTIFICATION ON STATUS CHANGE (TASDIQLASH / BEKOR QILISH) -->
+  <div id="status-action-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="bg-white rounded-3xl max-w-xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2" id="status-modal-title">
+          <i class="fa-solid fa-paper-plane text-amber-500"></i>
+          <span>Mijozga Xabarnoma Yuborish</span>
+        </h3>
+        <button onclick="closeStatusActionModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Guest and Booking Summary Card -->
+      <div id="status-modal-summary" class="bg-slate-50 border border-slate-200 rounded-2xl p-4 mb-4 text-xs space-y-1.5">
+        <!-- Rendered dynamically: guest name, phone, tour, date, target status -->
+      </div>
+
+      <!-- Cancellation Reason (Visible only when cancelling) -->
+      <div id="cancel-reason-box" class="hidden mb-4 p-4 rounded-2xl bg-rose-50 border border-rose-200">
+        <label class="block text-xs font-bold text-rose-900 uppercase mb-1.5">
+          Bekor qilish sababi:
+        </label>
+        <div class="flex flex-wrap gap-1.5 mb-2">
+          <button type="button" onclick="setCancelReason('O\'rinlar to\'lgan')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white border border-rose-300 text-rose-800 hover:bg-rose-100 transition-colors">
+            O'rinlar to'lgan
+          </button>
+          <button type="button" onclick="setCancelReason('Ob-havo noqulayligi')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white border border-rose-300 text-rose-800 hover:bg-rose-100 transition-colors">
+            Ob-havo noqulayligi
+          </button>
+          <button type="button" onclick="setCancelReason('Mijoz so\'rovi bo\'yicha')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white border border-rose-300 text-rose-800 hover:bg-rose-100 transition-colors">
+            Mijoz so'rovi bo'yicha
+          </button>
+          <button type="button" onclick="setCancelReason('Boshqa texnik sabab')" class="px-2.5 py-1 rounded-lg text-xs font-semibold bg-white border border-rose-300 text-rose-800 hover:bg-rose-100 transition-colors">
+            Boshqa sabab
+          </button>
+        </div>
+        <input type="text" id="cancel-reason-input" oninput="updateStatusModalMessage()" placeholder="Sababni yozing..." class="w-full bg-white border border-rose-300 rounded-xl px-3 py-2 text-xs text-rose-900 focus:ring-2 focus:ring-rose-500 focus:outline-none">
+      </div>
+
+      <!-- Generated Message to Customer (in customer's language) -->
+      <div class="mb-4">
+        <div class="flex items-center justify-between mb-1.5">
+          <label class="text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5">
+            <i class="fa-solid fa-envelope-open-text text-amber-500"></i>
+            <span>Mijozga Yuboriladigan Xabar Matni:</span>
+          </label>
+          <span id="status-client-lang-badge" class="text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-900 border border-amber-300">
+            🇺🇿 O'zbekcha
+          </span>
+        </div>
+        <textarea id="status-message-preview" rows="6" class="w-full bg-slate-50 border border-slate-300 rounded-2xl p-3 text-xs text-slate-800 font-mono leading-relaxed focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none"></textarea>
+      </div>
+
+      <!-- 1-Click Dispatch Channels -->
+      <div class="mb-5 p-3.5 rounded-2xl bg-amber-50/60 border border-amber-200">
+        <span class="block text-[11px] font-bold uppercase tracking-wider text-amber-900 mb-2">
+          1-Klikda mijozga xabar yuborish:
+        </span>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          <a id="btn-dispatch-telegram" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs shadow-sm transition-all text-center">
+            <i class="fa-brands fa-telegram text-sm"></i> Telegram
+          </a>
+          <a id="btn-dispatch-whatsapp" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all text-center">
+            <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
+          </a>
+          <a id="btn-dispatch-sms" href="#" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center">
+            <i class="fa-solid fa-comment-sms text-sm"></i> SMS
+          </a>
+          <button type="button" onclick="copyStatusMessageToClipboard()" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all text-center">
+            <i class="fa-regular fa-copy text-sm"></i> Nusxalash
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-3 border-t border-slate-100">
+        <button type="button" onclick="closeStatusActionModal()" class="px-4 py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-semibold text-xs transition-colors">
+          Bekor qilish
+        </button>
+        <button type="button" id="btn-confirm-status-save" onclick="applyStatusChangeAndNotify()" class="px-6 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-black text-xs shadow-md transition-all flex items-center gap-2">
+          <i class="fa-solid fa-check"></i>
+          <span id="btn-status-save-text">Tasdiqlash va Saqlash</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Scripts (v4.0 - Ko'p tilli & Dual Valyuta) -->
+  <script src="data.js?v=4.0"></script>
+  <script src="admin.js?v=4.0"></script>
+</body>
+</html>
