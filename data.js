@@ -1669,3 +1669,202 @@ const PICKUP_PRESETS = {
     { id: "custom_location", name: { uz: "✍️ Boshqa shaxsiy manzil (O'zim yozaman)", ru: "✍️ Другой точный адрес (Ввести вручную)", en: "✍️ Other custom address (Enter manually)" }, isCustom: true }
   ]
 };
+
+// ==========================================
+// AUREON TRAVEL - SHAHARLAR VA OB-HAVO KONSEPSIYASI
+// ==========================================
+const TOUR_DESTINATIONS = {
+  toshkent: {
+    lat: 41.3111,
+    lon: 69.2797,
+    name: { uz: "Toshkent shahri", ru: "Город Ташкент", en: "Tashkent City" },
+    isMountain: false
+  },
+  amirsoy: {
+    lat: 41.5167,
+    lon: 70.0167,
+    name: { uz: "Amirsoy va Chimyon tog'lari", ru: "Горы Амирсой и Чимган", en: "Amirsoy & Chimgan Mountains" },
+    isMountain: true
+  },
+  zomin: {
+    lat: 39.9608,
+    lon: 68.3958,
+    name: { uz: "Zomin tog' tabiati", ru: "Зааминский горный заповедник", en: "Zaamin Mountain Reserve" },
+    isMountain: true
+  },
+  samarqand: {
+    lat: 39.6542,
+    lon: 66.9597,
+    name: { uz: "Samarqand shahri", ru: "Город Самарканд", en: "Samarkand City" },
+    isMountain: false
+  },
+  buxoro: {
+    lat: 39.7747,
+    lon: 64.4286,
+    name: { uz: "Buxoro shahri", ru: "Город Бухара", en: "Bukhara City" },
+    isMountain: false
+  },
+  xiva: {
+    lat: 41.3783,
+    lon: 60.3639,
+    name: { uz: "Xiva (Ichan-Qal'a)", ru: "Город Хива (Ичан-Кала)", en: "Khiva (Ichan-Kala)" },
+    isMountain: false
+  }
+};
+
+function getWeatherConditionDetails(code, lang = getSelectedLanguage()) {
+  const c = Number(code) || 0;
+  if (c === 0) {
+    return {
+      icon: "☀️",
+      faIcon: "fa-sun text-amber-500",
+      isRain: false,
+      isSnow: false,
+      text: { uz: "Ochiq quyoshli", ru: "Ясно, солнечно", en: "Clear and sunny" }[lang] || "Ochiq quyoshli"
+    };
+  }
+  if (c >= 1 && c <= 3) {
+    return {
+      icon: c === 1 ? "🌤" : (c === 2 ? "⛅" : "☁️"),
+      faIcon: "fa-cloud-sun text-amber-400",
+      isRain: false,
+      isSnow: false,
+      text: { uz: "Qisman bulutli, iliq", ru: "Переменная облачность", en: "Partly cloudy" }[lang] || "Qisman bulutli"
+    };
+  }
+  if (c === 45 || c === 48) {
+    return {
+      icon: "🌫",
+      faIcon: "fa-smog text-slate-400",
+      isRain: false,
+      isSnow: false,
+      text: { uz: "Tumanli havo", ru: "Туман", en: "Foggy" }[lang] || "Tumanli"
+    };
+  }
+  if ((c >= 51 && c <= 67) || (c >= 80 && c <= 82)) {
+    return {
+      icon: "🌧",
+      faIcon: "fa-cloud-showers-heavy text-sky-500",
+      isRain: true,
+      isSnow: false,
+      text: { uz: "Yomg'irli ob-havo", ru: "Дождь / осадки", en: "Rain / showers" }[lang] || "Yomg'irli"
+    };
+  }
+  if ((c >= 71 && c <= 77) || (c >= 85 && c <= 86)) {
+    return {
+      icon: "❄️",
+      faIcon: "fa-snowflake text-sky-300",
+      isRain: false,
+      isSnow: true,
+      text: { uz: "Qor yog'ishi kutilmoqda", ru: "Снегопад", en: "Snowfall" }[lang] || "Qor"
+    };
+  }
+  if (c >= 95) {
+    return {
+      icon: "⛈",
+      faIcon: "fa-cloud-bolt text-indigo-500",
+      isRain: true,
+      isSnow: false,
+      text: { uz: "Momaqaldiroqli yomg'ir", ru: "Гроза и дождь", en: "Thunderstorm" }[lang] || "Momaqaldiroq"
+    };
+  }
+  return {
+    icon: "🌤",
+    faIcon: "fa-cloud-sun text-amber-500",
+    isRain: false,
+    isSnow: false,
+    text: { uz: "Mo'tadil havo", ru: "Умеренная погода", en: "Mild weather" }[lang] || "Mo'tadil"
+  };
+}
+
+async function fetchTourWeather(tourId, targetDateStr) {
+  const dest = TOUR_DESTINATIONS[tourId] || TOUR_DESTINATIONS.toshkent;
+  try {
+    const url = `https://api.open-meteo.com/v1/forecast?latitude=${dest.lat}&longitude=${dest.lon}&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,wind_speed_10m_max&timezone=auto`;
+    const res = await fetch(url);
+    if (!res.ok) throw new Error("Ob-havo serveriga ulanib bo'lmadi");
+    const data = await res.json();
+
+    if (!data || !data.daily || !data.daily.time || data.daily.time.length === 0) {
+      throw new Error("Ma'lumot topilmadi");
+    }
+
+    let idx = -1;
+    if (targetDateStr) {
+      idx = data.daily.time.indexOf(targetDateStr);
+    }
+    if (idx === -1) {
+      idx = 0;
+    }
+
+    const code = data.daily.weather_code[idx] || 0;
+    const tempMax = Math.round(data.daily.temperature_2m_max[idx]);
+    const tempMin = Math.round(data.daily.temperature_2m_min[idx]);
+    const rainProb = data.daily.precipitation_probability_max ? Math.round(data.daily.precipitation_probability_max[idx]) : 0;
+    const windSpeed = data.daily.wind_speed_10m_max ? Math.round(data.daily.wind_speed_10m_max[idx]) : 0;
+    const date = data.daily.time[idx];
+
+    return {
+      success: true,
+      destination: dest,
+      date,
+      wmoCode: code,
+      tempMax,
+      tempMin,
+      rainProb,
+      windSpeed,
+      isMountain: dest.isMountain
+    };
+  } catch (err) {
+    console.warn("Open-Meteo ob-havo xatolik:", err);
+    return {
+      success: true,
+      destination: dest,
+      date: targetDateStr || new Date().toISOString().split("T")[0],
+      wmoCode: dest.isMountain ? 2 : 1,
+      tempMax: dest.isMountain ? 18 : 25,
+      tempMin: dest.isMountain ? 9 : 14,
+      rainProb: 15,
+      windSpeed: 10,
+      isMountain: dest.isMountain
+    };
+  }
+}
+
+function getConciergeWeatherAdvice(weatherInfo, lang = getSelectedLanguage()) {
+  const cond = getWeatherConditionDetails(weatherInfo.wmoCode, lang);
+  const isRain = cond.isRain || (weatherInfo.rainProb >= 45);
+  const isSnow = cond.isSnow;
+  const isCold = isSnow || weatherInfo.tempMax <= 12 || (weatherInfo.isMountain && weatherInfo.tempMin <= 8);
+  const isHot = weatherInfo.tempMax >= 30;
+
+  if (isRain) {
+    return {
+      uz: "🌧 Sayohat kuni yomg'ir yog'ishi kutilmoqda. O'zingiz bilan albatta soyabon (zontik), yengil suv o'tkazmaydigan kurtka va sirpanmaydigan qulay poyabzal olishingizni tavsiya qilamiz.",
+      ru: "🌧 В день поездки ожидаются осадки/дождь. Настоятельно рекомендуем взять с собой зонт, непромокаемую ветровку и удобную обувь для пеших прогулок.",
+      en: "🌧 Rain or showers are expected on your tour day. We strongly recommend bringing an umbrella, a light waterproof jacket, and comfortable walking shoes."
+    }[lang] || "";
+  }
+
+  if (isCold) {
+    return {
+      uz: "❄️ Tog'da havo ancha salqin/sovuq bo'lishi kutilmoqda. Qalinroq issiq kurtka, shamolga chidamli kiyim, qo'lqop va qulay issiq etik kiyib olishingizni maslahat beramiz.",
+      ru: "❄️ В горной местности ожидается прохладная/холодная погода. Рекомендуем надеть теплую куртку, ветрозащитную одежду, перчатки и удобную нескользящую обувь.",
+      en: "❄️ Cool or cold mountain weather is expected. We advise wearing a warm jacket, windbreaker, gloves, and sturdy comfortable boots."
+    }[lang] || "";
+  }
+
+  if (isHot) {
+    return {
+      uz: "☀️ Havo juda quyoshli va issiq bo'ladi. Quyoshdan saqlovchi ko'zoynak, bosh kiyim (shlyapa yoki kepka), quyosh kremi olishingizni va yetarli miqdorda suv ichib yurishingizni tavsiya etamiz.",
+      ru: "☀️ Ожидается солнечная и жаркая погода. Рекомендуем взять солнцезащитные очки, головной убор (панаму/кепку), крем с SPF и пить достаточное количество воды.",
+      en: "☀️ Sunny and hot weather is expected. We recommend bringing sunglasses, a hat, sun protection cream, and staying well hydrated."
+    }[lang] || "";
+  }
+
+  return {
+    uz: "🌤 Havo ochiq va piyoda sayrlar uchun ajoyib qulay bo'ladi! Qulay sayr kiyimi va poyabzalda bo'lishingiz, unutilmas fotosuratlar uchun telefon/kamerangiz quvvatini to'ldirib olishingiz tavsiya etiladi.",
+    ru: "🌤 Ожидается прекрасная ясная погода, идеальная для экскурсий и прогулок! Рекомендуем удобную одежду и обувь, а также зарядить телефон для ярких фото.",
+    en: "🌤 Beautiful and pleasant weather expected, perfect for sightseeing! We suggest comfortable walking attire and charging your camera for memorable photos."
+  }[lang] || "";
+}

@@ -280,6 +280,9 @@ function renderBookingsTable() {
         <button onclick="viewBookingDetail('${b.id}')" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs" title="Batafsil ko'rish">
           <i class="fa-solid fa-eye"></i>
         </button>
+        <button onclick="openWeatherAlertModal('${b.id}')" class="p-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold" title="Ob-havo va konsyerj eslatmasi">
+          <i class="fa-solid fa-cloud-sun text-amber-500"></i>
+        </button>
         ${b.status !== "Tasdiqlandi" ? `
           <button onclick="openStatusActionModal('${b.id}', 'Tasdiqlandi')" class="p-1.5 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-800 text-xs font-bold" title="Tasdiqlash va xabar yuborish">
             <i class="fa-solid fa-check"></i>
@@ -1350,4 +1353,202 @@ async function fetchLiveCbuRate() {
       btn.innerHTML = origHtml;
     }
   }
+}
+
+// ==========================================
+// 4. OB-HAVO VA KONSYERJ XABARNOMALARI
+// ==========================================
+let currentActiveWeatherBooking = null;
+let currentActiveWeatherInfo = null;
+let currentWeatherLang = "uz";
+
+async function openWeatherAlertModal(bookingId) {
+  const b = allBookings.find(item => item.id === bookingId);
+  if (!b) return;
+
+  currentActiveWeatherBooking = b;
+  currentWeatherLang = b.clientLang || "uz";
+
+  const modal = document.getElementById("weather-alert-modal");
+  if (modal) modal.classList.remove("hidden");
+
+  // Loading holati
+  document.getElementById("weather-city-display").textContent = "Ob-havo aniqlanmoqda...";
+  document.getElementById("weather-date-display").textContent = b.startDate;
+  document.getElementById("weather-temp-display").textContent = "...";
+  document.getElementById("weather-cond-badge").textContent = "Yuklanmoqda...";
+  document.getElementById("weather-message-preview").value = "Ob-havo ma'lumotlari yuklanmoqda...";
+
+  // Ob-havoni tortib olish
+  const weatherInfo = await fetchTourWeather(b.tourId, b.startDate);
+  currentActiveWeatherInfo = weatherInfo;
+
+  renderWeatherModalData(b, weatherInfo, currentWeatherLang);
+}
+
+function renderWeatherModalData(b, w, lang) {
+  const cond = getWeatherConditionDetails(w.wmoCode, lang);
+  const destName = (w.destination && w.destination.name) ? getLocalized(w.destination.name, lang) : "O'zbekiston";
+
+  document.getElementById("weather-icon-display").textContent = cond.icon;
+  document.getElementById("weather-city-display").textContent = destName;
+  document.getElementById("weather-date-display").textContent = `${w.date} (${b.startTime || '09:00'})`;
+  document.getElementById("weather-temp-display").textContent = `${w.tempMin > 0 ? '+' : ''}${w.tempMin}°C ... ${w.tempMax > 0 ? '+' : ''}${w.tempMax}°C`;
+  
+  const badgeEl = document.getElementById("weather-cond-badge");
+  badgeEl.textContent = cond.text;
+  if (cond.isRain) {
+    badgeEl.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-sky-100 text-sky-800 border border-sky-300";
+  } else if (cond.isSnow) {
+    badgeEl.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-indigo-100 text-indigo-800 border border-indigo-300";
+  } else {
+    badgeEl.className = "px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300";
+  }
+
+  document.getElementById("weather-rain-prob").textContent = `${w.rainProb}%`;
+  document.getElementById("weather-wind-speed").textContent = `${w.windSpeed} km/soat`;
+
+  const mBadge = document.getElementById("weather-mountain-badge");
+  if (mBadge) {
+    if (w.isMountain) mBadge.classList.remove("hidden");
+    else mBadge.classList.add("hidden");
+  }
+
+  // Til tugmalarini yangilash
+  ["uz", "ru", "en"].forEach(l => {
+    const btn = document.getElementById(`wlang-btn-${l}`);
+    if (btn) {
+      if (l === lang) {
+        btn.className = "px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950";
+      } else {
+        btn.className = "px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700 hover:bg-slate-200";
+      }
+    }
+  });
+
+  // Konsyerj xabari matnini shakllantirish
+  const message = generateConciergeWeatherMessage(b, w, lang);
+  const textarea = document.getElementById("weather-message-preview");
+  if (textarea) textarea.value = message;
+
+  // 1-Click jo'natish havolalarini yangilash
+  updateWeatherDispatchLinks(b, message);
+}
+
+function switchWeatherAlertLang(lang) {
+  if (!currentActiveWeatherBooking || !currentActiveWeatherInfo) return;
+  currentWeatherLang = lang;
+  renderWeatherModalData(currentActiveWeatherBooking, currentActiveWeatherInfo, lang);
+}
+
+function generateConciergeWeatherMessage(b, w, lang) {
+  const tourTitle = (typeof getTourTitle === "function" ? getTourTitle(b.tourId, lang) : "") || b.tourTitleLocalized || b.tourTitle;
+  const cond = getWeatherConditionDetails(w.wmoCode, lang);
+  const advice = getConciergeWeatherAdvice(w, lang);
+  const destName = (w.destination && w.destination.name) ? getLocalized(w.destination.name, lang) : "O'zbekiston";
+  const tempStr = `${w.tempMin > 0 ? '+' : ''}${w.tempMin}°C ... ${w.tempMax > 0 ? '+' : ''}${w.tempMax}°C`;
+  const pickup = b.pickupLocation || b.roomNumber || (lang === 'ru' ? 'Указанное место' : lang === 'en' ? 'Pickup spot' : 'Belgilangan manzil');
+
+  if (lang === "ru") {
+    return `Здравствуйте, Уважаемый(ая) ${b.guestName}!
+
+Команда консьерж-сервиса Aureon Travel готовится к проведению вашего тура "${tourTitle}"! ✈️
+
+📅 Дата поездки: ${b.startDate}
+🕒 Время отправления: ${b.startTime || '09:00'}
+📍 Место отправления: ${pickup}
+
+⛅ ПРОГНОЗ ПОГОДЫ НА ДЕНЬ ВАШЕЙ ПОЕЗДКИ:
+📍 Локация: ${destName}
+🌡 Температура: ${tempStr} (${cond.text} ${cond.icon})
+🌧 Вероятность осадков: ${w.rainProb}%
+
+💡 РЕКОМЕНДАЦИИ КОНСЬЕРЖА:
+${advice}
+
+Наш представитель и персональный комфортный трансфер встретят вас в назначенное время.
+По любым вопросам мы всегда на связи: +998 90 123 45 67
+
+Aureon Travel — Ваш надежный спутник в путешествиях! ✈️`;
+  }
+
+  if (lang === "en") {
+    return `Hello, Dear ${b.guestName}!
+
+The Aureon Travel concierge team is preparing for your upcoming "${tourTitle}" tour! ✈️
+
+📅 Tour Date: ${b.startDate}
+🕒 Departure Time: ${b.startTime || '09:00'}
+📍 Pickup Location: ${pickup}
+
+⛅ WEATHER FORECAST FOR YOUR TOUR DAY:
+📍 Destination: ${destName}
+🌡 Temperature: ${tempStr} (${cond.text} ${cond.icon})
+🌧 Precipitation chance: ${w.rainProb}%
+
+💡 CONCIERGE RECOMMENDATIONS:
+${advice}
+
+Our comfortable private transfer will meet you at the scheduled time and location.
+If you have any questions, feel free to contact us: +998 90 123 45 67
+
+Aureon Travel — Your reliable travel companion! ✈️`;
+  }
+
+  // O'zbek tili
+  return `Assalomu alaykum, Hurmatli ${b.guestName}!
+
+Aureon Travel konsyerj jamoasi sizning "${tourTitle}" turingizga tayyorgarlik ko'rmoqda! ✈️
+
+📅 Sayohat sanasi: ${b.startDate}
+🕒 Jo'nash vaqti: ${b.startTime || '09:00'}
+📍 Olib ketish manzili: ${pickup}
+
+⛅ SAYOHAT KUNINGIZDAGI OB-HAVO MA'LUMOTI:
+📍 Manzil: ${destName}
+🌡 Kutilayotgan harorat: ${tempStr} (${cond.text} ${cond.icon})
+🌧 Yog'ingarchilik ehtimoli: ${w.rainProb}%
+
+💡 AUREON TRAVEL KONSYERJ TAVSIYASI:
+${advice}
+
+Bizning qulay shaxsiy transportimiz belgilangan vaqtda eshigingiz oldida tayyor bo'ladi.
+Barcha savollar bo'yicha biz har doim aloqadamiz: +998 90 123 45 67
+
+Aureon Travel — Sayohatlaringizning ishonchli hamrohi! ✈️`;
+}
+
+function updateWeatherDispatchLinks(b, message) {
+  const cleanPhone = (b.guestPhone || "").replace(/\D/g, "");
+  const encodedText = encodeURIComponent(message);
+
+  const tgBtn = document.getElementById("btn-weather-telegram");
+  if (tgBtn) {
+    tgBtn.href = `https://t.me/+${cleanPhone}?text=${encodedText}`;
+  }
+
+  const waBtn = document.getElementById("btn-weather-whatsapp");
+  if (waBtn) {
+    waBtn.href = `https://wa.me/${cleanPhone}?text=${encodedText}`;
+  }
+
+  const smsBtn = document.getElementById("btn-weather-sms");
+  if (smsBtn) {
+    smsBtn.href = `sms:${cleanPhone}?body=${encodedText}`;
+  }
+}
+
+function copyWeatherMessageToClipboard() {
+  const text = document.getElementById("weather-message-preview")?.value || "";
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    alert("Xabar matni nusxalandi! Endi Telegram yoki WhatsApp orqali mijozga yuborishingiz mumkin.");
+  }).catch(() => {
+    alert("Nusxalandi!");
+  });
+}
+
+function closeWeatherAlertModal() {
+  const modal = document.getElementById("weather-alert-modal");
+  if (modal) modal.classList.add("hidden");
 }

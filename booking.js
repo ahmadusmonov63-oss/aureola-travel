@@ -1559,7 +1559,7 @@ async function searchGuestBooking() {
     return;
   }
 
-  container.innerHTML = matched.map(b => {
+  const weatherCards = await Promise.all(matched.map(async b => {
     let statusClass = "bg-amber-50 border-amber-200 text-amber-900";
     let statusIcon = "fa-clock text-amber-600";
     let statusText = dict.statusPending || "Kutilmoqda";
@@ -1583,6 +1583,36 @@ async function searchGuestBooking() {
 
     const localizedTitle = (typeof getTourTitle === "function" ? getTourTitle(b.tourId, currentLang) : "") || b.tourTitleLocalized || b.tourTitle;
 
+    let weatherBox = "";
+    if (typeof fetchTourWeather === "function" && b.startDate) {
+      try {
+        const w = await fetchTourWeather(b.tourId, b.startDate);
+        const cond = getWeatherConditionDetails(w.wmoCode, currentLang);
+        const advice = getConciergeWeatherAdvice(w, currentLang);
+        const wHeader = currentLang === "ru" ? "Прогноз погоды и советы консьержа" 
+                      : currentLang === "en" ? "Tour day weather & concierge tips" 
+                      : "Sayohat kuni ob-havo va konsyerj tavsiyasi";
+        const tempText = `${w.tempMin > 0 ? '+' : ''}${w.tempMin}°C ... ${w.tempMax > 0 ? '+' : ''}${w.tempMax}°C`;
+
+        weatherBox = `
+          <div class="mt-2.5 p-3 rounded-xl bg-gradient-to-r from-sky-50 via-blue-50/70 to-amber-50/60 border border-sky-200 text-xs space-y-1">
+            <div class="flex items-center justify-between font-bold">
+              <span class="flex items-center gap-1.5 text-sky-950 text-[11px]">
+                <span class="text-sm">${cond.icon}</span>
+                <span>${wHeader}:</span>
+              </span>
+              <span class="text-[10px] bg-white px-2 py-0.5 rounded-full border border-sky-200 shadow-xs font-black text-slate-800">
+                ${tempText}
+              </span>
+            </div>
+            <p class="text-[11px] text-slate-700 leading-relaxed font-medium">
+              ${advice}
+            </p>
+          </div>
+        `;
+      } catch (err) {}
+    }
+
     return `
       <div class="p-4 rounded-2xl border ${statusClass} space-y-2 text-xs">
         <div class="flex items-center justify-between pb-2 border-b border-black/10">
@@ -1601,7 +1631,10 @@ async function searchGuestBooking() {
         <p class="text-[11px] leading-relaxed pt-2 border-t border-black/10 font-medium text-slate-600">
           ${statusDesc}
         </p>
+        ${weatherBox}
       </div>
     `;
-  }).join("");
+  }));
+
+  container.innerHTML = weatherCards.join("");
 }
