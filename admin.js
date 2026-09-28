@@ -406,6 +406,79 @@ function setCancelReason(reason) {
   updateStatusModalMessage();
 }
 
+function formatLocalizedHotel(hotelOption, nights, lang) {
+  const n = Number(nights) || 0;
+  const str = String(hotelOption || "");
+  const hasHotel = str.includes("with-hotel") || str.includes("Otel bilan") || str.includes("Включен") || str.includes("Included") || hotelOption === true;
+
+  if (n <= 0) {
+    if (lang === "ru") return "Не требуется (дневной тур)";
+    if (lang === "en") return "Not required (day trip)";
+    return "Talab etilmaydi (kunduzgi tur)";
+  }
+  if (hasHotel) {
+    if (lang === "ru") return `Включен (проживание в отеле, ${n} ноч.)`;
+    if (lang === "en") return `Included (hotel stay, ${n} night${n > 1 ? 's' : ''})`;
+    return `Otel bilan birga (${n} kecha tunash)`;
+  }
+  if (lang === "ru") return "Без отеля (только трансфер и тур)";
+  if (lang === "en") return "Tour only (no hotel)";
+  return "Otelsiz (faqat transfer va marshrut)";
+}
+
+function formatLocalizedGuide(guideOption, guideLanguage, lang) {
+  const str = String(guideOption || "");
+  const hasGuide = str.includes("with-guide") || str.includes("Gid bilan") || str.includes("С гидом") || str.includes("With guide") || guideOption === true;
+
+  const langNameMap = {
+    uz: { uz: "O'zbek tilida", ru: "на узбекском языке", en: "in Uzbek" },
+    ru: { uz: "Rus tilida", ru: "на русском языке", en: "in Russian" },
+    en: { uz: "Ingliz tilida", ru: "на английском языке", en: "in English" }
+  };
+  const gLang = guideLanguage || "uz";
+  const langText = (langNameMap[gLang] && langNameMap[gLang][lang]) ? langNameMap[gLang][lang] : (gLang === "ru" ? "на русском" : gLang === "en" ? "in English" : "o'zbek tilida");
+
+  if (hasGuide) {
+    if (lang === "ru") return `Профессиональный гид (${langText})`;
+    if (lang === "en") return `Professional guide (${langText})`;
+    return `Professional gid (${langText})`;
+  }
+  if (lang === "ru") return "Без гида (самостоятельный тур)";
+  if (lang === "en") return "Self-guided (without guide)";
+  return "Gidsiz (mustaqil sayr)";
+}
+
+function formatLocalizedDuration(days, nights, lang) {
+  const d = Number(days) || 1;
+  const n = Number(nights) || 0;
+  if (d === 1) {
+    if (lang === "ru") return "1 день (дневной тур)";
+    if (lang === "en") return "1 day (day trip)";
+    return "1 kunlik (kunduzgi sayr)";
+  }
+  if (lang === "ru") return `${d} дня (${n} ноч.)`;
+  if (lang === "en") return `${d} days (${n} night${n > 1 ? 's' : ''})`;
+  return `${d} kun (${n} kecha)`;
+}
+
+function formatLocalizedTravelers(adults, children, lang) {
+  const a = Number(adults) || 1;
+  const c = Number(children) || 0;
+  if (lang === "ru") {
+    let t = `${a} взросл.`;
+    if (c > 0) t += `, ${c} дет.`;
+    return t;
+  }
+  if (lang === "en") {
+    let t = `${a} adult${a > 1 ? 's' : ''}`;
+    if (c > 0) t += `, ${c} child${c > 1 ? 'ren' : ''}`;
+    return t;
+  }
+  let t = `${a} katta`;
+  if (c > 0) t += `, ${c} bola`;
+  return t;
+}
+
 function updateStatusModalMessage() {
   const b = allBookings.find(item => item.id === currentActionBookingId);
   if (!b) return;
@@ -413,7 +486,14 @@ function updateStatusModalMessage() {
   const clientLang = b.clientLang || "uz";
   const isConfirmed = currentActionTargetStatus === "Tasdiqlandi";
   const reasonInput = document.getElementById("cancel-reason-input");
-  const reasonText = reasonInput?.value.trim() || currentCancelReason || "O'rinlar to'lgan";
+  const reasonText = reasonInput?.value.trim() || currentCancelReason || (clientLang === "ru" ? "Места заполнены" : clientLang === "en" ? "Fully booked" : "O'rinlar to'lgan");
+
+  const tourTitle = (typeof getTourTitle === "function" ? getTourTitle(b.tourId, clientLang) : "") || b.tourTitleLocalized || b.tourTitle || "Aureon Travel";
+  const hotelText = formatLocalizedHotel(b.hotelOption, b.nights, clientLang);
+  const guideText = formatLocalizedGuide(b.guideOption, b.guideLanguage, clientLang);
+  const durationText = formatLocalizedDuration(b.durationDays, b.nights, clientLang);
+  const travelersText = formatLocalizedTravelers(b.adults, b.children, clientLang);
+  const pickupText = b.pickupLocation || b.roomNumber || (clientLang === "ru" ? "По согласованию" : clientLang === "en" ? "As agreed" : "Kelishilgan manzil");
 
   let message = "";
 
@@ -422,18 +502,19 @@ function updateStatusModalMessage() {
       message = 
 `Здравствуйте, Уважаемый(ая) ${b.guestName}!
 
-Ваша заявка на тур "${b.tourTitleLocalized || b.tourTitle}" в Aureon Travel успешно ПОДТВЕРЖДЕНА! ✅
+Ваша заявка на тур "${tourTitle}" в Aureon Travel успешно ПОДТВЕРЖДЕНА! ✅
 
 📋 Номер брони: ${b.id}
 📅 Дата: ${b.startDate}
 🕒 Время отправления: ${b.startTime || '09:00'}
-📍 Место отправления: ${b.pickupLocation || b.roomNumber || 'По согласованию'}
-⏳ Длительность: ${b.durationDays} дня (${b.nights || 0} ноч.)
-🏨 Отель: ${b.hotelOption === 'Otel bilan' ? 'Включен' : 'Без отеля'}
-🗣 Гид: ${b.guideOption}
+📍 Место отправления: ${pickupText}
+⏳ Длительность: ${durationText}
+🏨 Отель: ${hotelText}
+🗣 Гид: ${guideText}
+👥 Путешественники: ${travelersText}
 💰 Итоговая стоимость: ${formatCurrency(b.totalPrice, "ru")}
 
-Наш представитель и комфортабельный трансфер встретят вас в назначенное время в указанном месте.
+Наш представитель и комфортабельный персональный трансфер встретят вас в назначенное время в указанном месте.
 По любым вопросам мы всегда на связи: +998 90 123 45 67
 
 Aureon Travel — Ваш надежный спутник в путешествиях! ✈️`;
@@ -441,18 +522,19 @@ Aureon Travel — Ваш надежный спутник в путешестви
       message = 
 `Hello, Dear ${b.guestName}!
 
-Your tour booking for "${b.tourTitleLocalized || b.tourTitle}" with Aureon Travel is CONFIRMED! ✅
+Your tour booking for "${tourTitle}" with Aureon Travel is CONFIRMED! ✅
 
 📋 Booking ID: ${b.id}
 📅 Start Date: ${b.startDate}
 🕒 Departure Time: ${b.startTime || '09:00'}
-📍 Pickup Point: ${b.pickupLocation || b.roomNumber || 'As arranged'}
-⏳ Duration: ${b.durationDays} days (${b.nights || 0} nights)
-🏨 Hotel: ${b.hotelOption === 'Otel bilan' ? 'Included' : 'No hotel'}
-🗣 Guide: ${b.guideOption}
+📍 Pickup Location: ${pickupText}
+⏳ Duration: ${durationText}
+🏨 Hotel: ${hotelText}
+🗣 Guide: ${guideText}
+👥 Travelers: ${travelersText}
 💰 Total Price: ${formatCurrency(b.totalPrice, "en")}
 
-Our representative and private transfer will meet you at the scheduled time and pickup location.
+Our representative and comfortable private transfer will meet you at the scheduled time and location.
 If you have any questions, feel free to contact us: +998 90 123 45 67
 
 Aureon Travel — Your reliable travel companion! ✈️`;
@@ -460,18 +542,19 @@ Aureon Travel — Your reliable travel companion! ✈️`;
       message = 
 `Assalomu alaykum, Hurmatli ${b.guestName}!
 
-Aureon Travel orqali "${b.tourTitleLocalized || b.tourTitle}" turiga bergan buyurtmangiz TASDIQLANDI! ✅
+Aureon Travel orqali "${tourTitle}" turiga bergan arizangiz TASDIQLANDI! ✅
 
 📋 Buyurtma ID: ${b.id}
 📅 Sana: ${b.startDate}
-🕒 Boshlanish vaqti: ${b.startTime || '09:00'}
-📍 Olib ketish joyi: ${b.pickupLocation || b.roomNumber || 'Kelishilgan manzil'}
-⏳ Davomiyligi: ${b.durationDays} kun (${b.nights || 0} kecha)
-🏨 Otel: ${b.hotelOption}
-🗣 Gid: ${b.guideOption}
+🕒 Jo'nash vaqti: ${b.startTime || '09:00'}
+📍 Olib ketish joyi: ${pickupText}
+⏳ Davomiyligi: ${durationText}
+🏨 Mehmonxona: ${hotelText}
+🗣 Gid xizmati: ${guideText}
+👥 Sayohatchilar: ${travelersText}
 💰 Jami hisob: ${formatCurrency(b.totalPrice, "uz")}
 
-Bizning vakilimiz va qulay transferimiz belgilangan vaqtda siz tanlagan manzildan olib ketadi.
+Bizning vakilimiz va qulay shaxsiy transportimiz belgilangan vaqtda siz ko'rsatgan manzildan kutib oladi.
 Savollaringiz bo'lsa, istalgan vaqtda yozishingiz mumkin: +998 90 123 45 67
 
 Aureon Travel — Sayohatlaringizning ishonchli hamrohi! ✈️`;
@@ -481,7 +564,7 @@ Aureon Travel — Sayohatlaringizning ishonchli hamrohi! ✈️`;
       message = 
 `Здравствуйте, Уважаемый(ая) ${b.guestName}!
 
-Уведомляем вас о том, что ваша заявка на тур "${b.tourTitleLocalized || b.tourTitle}" (ID: ${b.id}) была отклонена. ❌
+Уведомляем вас о том, что ваша заявка на тур "${tourTitle}" (ID: ${b.id}) была отменена. ❌
 
 Причина: ${reasonText}
 
@@ -493,7 +576,7 @@ Aureon Travel — Sayohatlaringizning ishonchli hamrohi! ✈️`;
       message = 
 `Hello, Dear ${b.guestName}!
 
-We regret to inform you that your booking for "${b.tourTitleLocalized || b.tourTitle}" (ID: ${b.id}) has been cancelled. ❌
+We regret to inform you that your booking for "${tourTitle}" (ID: ${b.id}) has been cancelled. ❌
 
 Reason: ${reasonText}
 
@@ -505,7 +588,7 @@ Best regards, Aureon Travel ✈️`;
       message = 
 `Assalomu alaykum, Hurmatli ${b.guestName}!
 
-Aureon Travel orqali "${b.tourTitleLocalized || b.tourTitle}" turiga bergan buyurtmangiz (${b.id}) afsuski bekor qilindi. ❌
+Aureon Travel orqali "${tourTitle}" turiga bergan arizangiz (${b.id}) afsuski bekor qilindi. ❌
 
 Sabab: ${reasonText}
 
@@ -926,7 +1009,7 @@ function autoSaveTelegramInputs() {
   const rateVal = Number(rateInput?.value);
 
   if (rateVal && rateVal > 0) {
-    saveExchangeRate(rateVal);
+    persistExchangeRate(rateVal);
   }
 
   const existing = getTelegramConfig() || {};
@@ -939,6 +1022,20 @@ function autoSaveTelegramInputs() {
 
   saveTelegramConfig(config);
   updateTelegramBadge(!!(config.botToken && config.chatId));
+
+  // Backend API ga ham doimiy saqlash
+  const settingsApi = getApiUrl('/api/settings');
+  if (settingsApi) {
+    fetch(settingsApi, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        exchangeRate: (rateVal && rateVal > 0) ? rateVal : getExchangeRate(),
+        telegram: config
+      })
+    }).catch(e => console.warn("Backend settings sync error:", e));
+  }
+
   showAutosaveIndicator("Avtomatik saqlandi");
 }
 
@@ -950,7 +1047,7 @@ function onRateInputChange() {
   const rateInput = document.getElementById("usd-exchange-rate");
   const val = Number(rateInput?.value);
   if (val && val > 0) {
-    saveExchangeRate(val);
+    persistExchangeRate(val);
     updateRateDisplay();
   }
 }
@@ -1163,14 +1260,16 @@ function handleUpdateExchangeRate(e) {
     return;
   }
 
-  saveExchangeRate(val);
+  persistExchangeRate(val);
+  const rateInput = document.getElementById("usd-exchange-rate");
+  if (rateInput) rateInput.value = val;
   updateRateDisplay();
   renderBookingsTable();
   renderAdminTours();
 
   const statusEl = document.getElementById("currency-save-status");
   if (statusEl) {
-    statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Kurs 1 USD = ${new Intl.NumberFormat('uz-UZ').format(val)} UZS ga yangilandi va saqlandi!`;
+    statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Kurs 1 USD = ${new Intl.NumberFormat('uz-UZ').format(val)} UZS deb saqlandi!`;
     statusEl.classList.remove("hidden");
     setTimeout(() => {
       statusEl.classList.add("hidden");
@@ -1197,7 +1296,7 @@ function setModalQuickRate(val) {
 }
 
 function handleQuickRateModalSubmit(e) {
-  e.preventDefault();
+  if (e) e.preventDefault();
   const input = document.getElementById("modal-rate-input");
   const val = Number(input?.value);
 
@@ -1206,7 +1305,11 @@ function handleQuickRateModalSubmit(e) {
     return;
   }
 
-  saveExchangeRate(val);
+  persistExchangeRate(val);
+  const rateInput = document.getElementById("usd-exchange-rate");
+  if (rateInput) rateInput.value = val;
+  const tabInput = document.getElementById("currency-tab-rate-input");
+  if (tabInput) tabInput.value = val;
   updateRateDisplay();
   renderBookingsTable();
   renderAdminTours();
@@ -1230,7 +1333,7 @@ async function fetchLiveCbuRate() {
     if (usd && usd.Rate) {
       const liveRate = Math.round(parseFloat(usd.Rate));
       setQuickRate(liveRate);
-      saveExchangeRate(liveRate);
+      persistExchangeRate(liveRate);
       updateRateDisplay();
       renderBookingsTable();
       renderAdminTours();

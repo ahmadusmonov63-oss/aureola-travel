@@ -1538,8 +1538,53 @@ function getExchangeRate() {
 
 function saveExchangeRate(rate) {
   try {
-    localStorage.setItem("aureon_usd_rate", String(rate));
+    const num = Number(rate);
+    if (num && !isNaN(num) && num > 0) {
+      localStorage.setItem("aureon_usd_rate", String(num));
+    }
   } catch (e) {}
+}
+
+async function persistExchangeRate(rate) {
+  const num = Number(rate);
+  if (!num || isNaN(num) || num <= 0) return;
+  saveExchangeRate(num);
+
+  const settingsApi = typeof getApiUrl === "function" ? getApiUrl('/api/settings') : null;
+  if (settingsApi) {
+    try {
+      await fetch(settingsApi, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ exchangeRate: num })
+      });
+    } catch (e) {
+      console.warn("Backend rate saqlashda ogohlantirish:", e);
+    }
+  }
+}
+
+async function syncExchangeRateFromBackend() {
+  const settingsApi = typeof getApiUrl === "function" ? getApiUrl('/api/settings') : null;
+  if (settingsApi) {
+    try {
+      const res = await fetch(settingsApi);
+      if (res.ok) {
+        const s = await res.json();
+        if (s && s.exchangeRate && Number(s.exchangeRate) > 0) {
+          saveExchangeRate(Number(s.exchangeRate));
+          return Number(s.exchangeRate);
+        }
+      }
+    } catch (e) {}
+  }
+  return getExchangeRate();
+}
+
+function getTourTitle(tourId, lang = getSelectedLanguage()) {
+  const tour = (typeof DEFAULT_TOURS !== "undefined" ? DEFAULT_TOURS : []).find(t => t.id === tourId);
+  if (!tour) return "";
+  return getLocalized(tour.title, lang);
 }
 
 function convertSomToUsd(amountSom) {

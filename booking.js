@@ -17,10 +17,13 @@ let selectedPickupType = "hotel"; // 'hotel' | 'airport' | 'station' | 'custom'
 let selectedStartTime = "09:00";
 const REQUIRED_FIELDS = ["start-date", "start-time", "pickup-location", "guest-name", "guest-phone", "room-number", "guest-note"];
 
-document.addEventListener("DOMContentLoaded", () => {
+document.addEventListener("DOMContentLoaded", async () => {
   // 1. Tanlangan tilni yuklash
   currentLang = getSelectedLanguage();
   guideLanguage = currentLang;
+
+  // Dollar kursini backend serverdan sinxronlash
+  await syncExchangeRateFromBackend();
 
   // 2. Turlarni yuklash
   activeTours = getStoredTours();
@@ -1187,6 +1190,16 @@ function calculateBookingPrice() {
     rateBadgeEl.textContent = `1 USD ≈ ${new Intl.NumberFormat('uz-UZ').format(getExchangeRate())} UZS`;
   }
 
+  // Mobil ekran pastki qismidagi suzuvchi narx paneli
+  const mobileBottomTotal = document.getElementById("mobile-bottom-total");
+  const mobileBottomUsd = document.getElementById("mobile-bottom-usd");
+  if (mobileBottomTotal) {
+    mobileBottomTotal.textContent = formatCurrencySom(grandTotal, currentLang);
+  }
+  if (mobileBottomUsd) {
+    mobileBottomUsd.textContent = `≈ ${formatCurrencyUsd(grandTotal)} USD`;
+  }
+
   // Karta ichidagi narx nishonlarini yangilash
   const hotelBadge = document.getElementById("hotel-price-badge");
   if (hotelBadge) {
@@ -1552,17 +1565,23 @@ async function searchGuestBooking() {
     let statusText = dict.statusPending || "Kutilmoqda";
     let statusDesc = dict.statusPendingDesc || "Arizangiz qabul qilingan va administrator tomonidan ko'rib chiqilmoqda.";
 
-    if (b.status === "Tasdiqlandi") {
+    const st = (b.status || "").toLowerCase();
+    const isConfirmed = st.includes("tasdiq") || st.includes("подтвержд") || st.includes("confirm");
+    const isCancelled = st.includes("bekor") || st.includes("отмен") || st.includes("cancel");
+
+    if (isConfirmed) {
       statusClass = "bg-emerald-50 border-emerald-300 text-emerald-900";
       statusIcon = "fa-circle-check text-emerald-600";
-      statusText = dict.statusConfirmed || "Tasdiqlandi";
-      statusDesc = dict.statusConfirmedDesc || "Arizangiz tasdiqlandi! Tez orada qulay transfer sizni kutib oladi.";
-    } else if (b.status === "Bekor qilindi") {
+      statusText = dict.statusConfirmed || "Tasdiqlangan";
+      statusDesc = dict.statusConfirmedDesc || "Arizangiz tasdiqlandi! Shaxsiy transportimiz belgilangan vaqtda xizmatingizga tayyor.";
+    } else if (isCancelled) {
       statusClass = "bg-rose-50 border-rose-300 text-rose-900";
       statusIcon = "fa-circle-xmark text-rose-600";
-      statusText = dict.statusCancelled || "Bekor qilindi";
-      statusDesc = dict.statusCancelledDesc || "Afsuski, ushbu ariza bekor qilingan.";
+      statusText = dict.statusCancelled || "Bekor qilingan";
+      statusDesc = dict.statusCancelledDesc || "Afsuski, ushbu ariza ma'muriyat tomonidan bekor qilindi.";
     }
+
+    const localizedTitle = (typeof getTourTitle === "function" ? getTourTitle(b.tourId, currentLang) : "") || b.tourTitleLocalized || b.tourTitle;
 
     return `
       <div class="p-4 rounded-2xl border ${statusClass} space-y-2 text-xs">
@@ -1572,7 +1591,7 @@ async function searchGuestBooking() {
             <i class="fa-solid ${statusIcon}"></i> ${statusText}
           </span>
         </div>
-        <div class="font-bold text-slate-900 text-sm">${b.tourTitleLocalized || b.tourTitle}</div>
+        <div class="font-bold text-slate-900 text-sm">${localizedTitle}</div>
         <div class="grid grid-cols-2 gap-2 text-[11px] text-slate-700">
           <div>📅 ${dict.sumDate || 'Sana:'} <strong>${b.startDate}</strong></div>
           <div>⏳ ${b.durationDays} ${dict.daysLabel || 'kun'} (${b.nights || 0} ${dict.nightsLabel || 'kecha'})</div>
