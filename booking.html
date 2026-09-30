@@ -149,18 +149,26 @@
       <!-- LEFT SIDE: STEPS & CHOICES (8 Cols) -->
       <div class="lg:col-span-8 space-y-6">
 
-        <!-- 1. TURNI TANLASH (VISUAL INTERACTIVE CARDS) -->
-        <div class="bg-white rounded-2xl p-5 sm:p-7 shadow-sm border border-slate-200">
-          <div class="flex items-center justify-between mb-4">
+        <!-- 1. TURNI TANLASH / TANLANGAN YO'NALISH (SMART COMPACT VIEW) -->
+        <div id="step-tour-card-container" class="bg-white rounded-2xl p-4 sm:p-7 shadow-sm border border-slate-200 transition-all">
+          <div class="flex items-center justify-between mb-3.5">
             <h2 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2.5">
               <span class="w-7 h-7 rounded-xl bg-amber-500 text-slate-950 font-black text-sm flex items-center justify-center shadow-sm">1</span>
-              <span data-i18n="stepTour">1. Turni Tanlang</span>
+              <span id="step-tour-title" data-i18n="stepTourSelected">1. Tanlangan Sayohat Yo'nalishi</span>
             </h2>
-            <span class="text-xs text-slate-400 font-medium" data-i18n="allToursNotice">Bizning 6 ta eksklyuziv yo'nalishimiz:</span>
+            <button id="btn-toggle-tours" type="button" onclick="toggleTourPicker()" class="text-xs font-bold text-amber-700 hover:text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-200 px-3 py-1.5 rounded-xl transition-all flex items-center gap-1.5 shadow-xs cursor-pointer">
+              <i id="btn-toggle-icon" class="fa-solid fa-arrows-rotate text-[11px] text-amber-600"></i>
+              <span id="btn-toggle-tours-text" data-i18n="btnChangeTour">Turni almashtirish</span>
+            </button>
           </div>
 
-          <!-- Tour Visual Cards Grid -->
-          <div id="tour-cards-selector" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5">
+          <!-- Tanlangan turning kompakt vizual kartochkasi -->
+          <div id="selected-tour-display" class="transition-all duration-300">
+            <!-- Rendered dynamically by booking.js -->
+          </div>
+
+          <!-- Barcha 6 ta turning to'liq selektori (faqat almashtirish bosilganda ochiladi) -->
+          <div id="tour-cards-selector" class="hidden pt-3 border-t border-slate-100 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 transition-all duration-300">
             <!-- Rendered dynamically by booking.js -->
           </div>
         </div>

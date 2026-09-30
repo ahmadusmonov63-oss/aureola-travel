@@ -822,13 +822,115 @@ function updateDurationButtonLabels() {
   }
 }
 
+let isTourSelectorExpanded = false;
+
+function toggleTourPicker() {
+  isTourSelectorExpanded = !isTourSelectorExpanded;
+  updateTourSelectorVisibility();
+}
+
+function updateTourSelectorVisibility() {
+  const selector = document.getElementById("tour-cards-selector");
+  const btnText = document.getElementById("btn-toggle-tours-text");
+  const btnIcon = document.getElementById("btn-toggle-icon");
+  const titleEl = document.getElementById("step-tour-title");
+  const dict = UI_STRINGS[currentLang] || UI_STRINGS.uz;
+
+  if (isTourSelectorExpanded) {
+    if (selector) selector.classList.remove("hidden");
+    if (btnText) btnText.textContent = dict.btnCloseTourPicker || (currentLang === 'ru' ? "Закрыть" : currentLang === 'en' ? "Close" : "Yopish");
+    if (btnIcon) btnIcon.className = "fa-solid fa-xmark text-amber-600 text-xs";
+    if (titleEl) titleEl.textContent = dict.stepTour || (currentLang === 'ru' ? "1. Выберите тур" : currentLang === 'en' ? "1. Select Destination" : "1. Turni Tanlang");
+  } else {
+    if (selector) selector.classList.add("hidden");
+    if (btnText) btnText.textContent = dict.btnChangeTour || (currentLang === 'ru' ? "Сменить тур" : currentLang === 'en' ? "Change tour" : "Turni almashtirish");
+    if (btnIcon) btnIcon.className = "fa-solid fa-arrows-rotate text-amber-600 text-xs";
+    if (titleEl) titleEl.textContent = dict.stepTourSelected || (currentLang === 'ru' ? "1. Выбранное Направление Тура" : currentLang === 'en' ? "1. Selected Tour Destination" : "1. Tanlangan Sayohat Yo'nalishi");
+  }
+}
+
+function renderSelectedTourBanner(tour) {
+  if (!tour) return "";
+  const titleText = getLocalized(tour.title, currentLang);
+  const subtitleText = getLocalized(tour.subtitle, currentLang);
+  const locationText = getLocalized(tour.location, currentLang);
+  const badgeText = getLocalized(tour.badge, currentLang);
+  const dict = UI_STRINGS[currentLang] || UI_STRINGS.uz;
+
+  const rawHighlights = (tour.highlights && tour.highlights[currentLang]) || (tour.highlights && tour.highlights.uz) || [];
+  const topHighlights = rawHighlights.slice(0, 3);
+  const selectedBadgeLbl = dict.tourSelectedBadge || (currentLang === 'ru' ? "Выбрано" : currentLang === 'en' ? "Selected" : "Tanlangan");
+
+  return `
+    <div class="rounded-2xl border-2 border-amber-500/80 bg-gradient-to-br from-amber-50/70 via-white to-sky-50/40 p-3.5 sm:p-5 shadow-sm transition-all">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+        
+        <!-- Rasm -->
+        <div class="relative w-full sm:w-44 h-36 sm:h-28 rounded-xl overflow-hidden shrink-0 bg-slate-100 shadow-xs">
+          <img src="${tour.mainImage}" alt="${titleText}" referrerpolicy="no-referrer" onerror="this.onerror=null; this.src='https://images.unsplash.com/photo-1548013146-72479768bada?auto=format&fit=crop&w=600&q=80'" class="w-full h-full object-cover">
+          <span class="absolute top-2 left-2 ${tour.badgeColor || 'bg-amber-500'} text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm">
+            ${badgeText || 'Tavsiya'}
+          </span>
+          <span class="absolute bottom-2 right-2 bg-emerald-600 text-white text-[10px] font-bold px-2.5 py-0.5 rounded-full shadow-sm flex items-center gap-1">
+            <i class="fa-solid fa-circle-check text-[10px]"></i> ${selectedBadgeLbl}
+          </span>
+        </div>
+
+        <!-- Ma'lumotlar -->
+        <div class="flex-1 min-w-0 w-full space-y-1">
+          <div class="flex flex-wrap items-center justify-between gap-1">
+            <h3 class="text-sm sm:text-base font-bold text-slate-900 line-clamp-1">
+              ${titleText}
+            </h3>
+            <span class="text-xs font-black text-amber-600 bg-amber-100/70 border border-amber-200 px-2.5 py-0.5 rounded-lg shrink-0">
+              ${formatCurrency(tour.basePricePerPerson, currentLang)} <span class="text-[10px] font-normal text-slate-600">/${dict.perPerson || 'kishi'}</span>
+            </span>
+          </div>
+
+          <p class="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+            <i class="fa-solid fa-location-dot text-amber-500 text-xs"></i>
+            <span>${locationText}</span>
+          </p>
+
+          ${subtitleText ? `
+            <p class="text-xs text-slate-600 leading-relaxed font-normal line-clamp-2 pt-0.5">
+              ${subtitleText}
+            </p>
+          ` : ''}
+
+          <!-- Qisqa afzalliklar / teglari -->
+          ${topHighlights.length > 0 ? `
+            <div class="flex flex-wrap gap-1.5 pt-1">
+              ${topHighlights.map(h => `
+                <span class="text-[11px] bg-white border border-slate-200 text-slate-700 px-2 py-0.5 rounded-lg font-medium flex items-center gap-1 shadow-2xs">
+                  <i class="fa-solid fa-check text-[9px] text-emerald-600"></i> ${h}
+                </span>
+              `).join('')}
+            </div>
+          ` : ''}
+        </div>
+
+      </div>
+    </div>
+  `;
+}
+
 // 2. Turlar kartochkalarini chiqarish (Katta qulay vizual selector)
 function renderTourCards() {
-  const container = document.getElementById("tour-cards-selector");
-  if (!container) return;
+  const selectedDisplay = document.getElementById("selected-tour-display");
+  const gridContainer = document.getElementById("tour-cards-selector");
+
+  const currentTour = activeTours.find(t => t.id === selectedTourId) || activeTours[0];
+  if (selectedDisplay && currentTour) {
+    selectedDisplay.innerHTML = renderSelectedTourBanner(currentTour);
+  }
+
+  updateTourSelectorVisibility();
+
+  if (!gridContainer) return;
 
   const dict = UI_STRINGS[currentLang] || UI_STRINGS.uz;
-  container.innerHTML = "";
+  gridContainer.innerHTML = "";
 
   activeTours.forEach(tour => {
     const isSelected = tour.id === selectedTourId;
@@ -837,7 +939,7 @@ function renderTourCards() {
     const badgeText = getLocalized(tour.badge, currentLang);
 
     const card = document.createElement("div");
-    card.onclick = () => selectTour(tour.id);
+    card.onclick = () => selectTour(tour.id, true);
     
     if (isSelected) {
       card.className = "cursor-pointer rounded-2xl p-3 border-2 border-amber-500 bg-amber-50/50 shadow-md ring-2 ring-amber-500/20 transition-all flex flex-col justify-between relative overflow-hidden group";
@@ -878,14 +980,22 @@ function renderTourCards() {
       </div>
     `;
 
-    container.appendChild(card);
+    gridContainer.appendChild(card);
   });
 }
 
-function selectTour(tourId) {
+function selectTour(tourId, userClicked = false) {
   selectedTourId = tourId;
+  isTourSelectorExpanded = false;
   renderTourCards();
   calculateBookingPrice();
+
+  if (userClicked) {
+    const step2El = document.getElementById("start-date") || document.getElementById("start-time");
+    if (step2El) {
+      step2El.scrollIntoView({ behavior: "smooth", block: "center" });
+    }
+  }
 }
 
 // 3. Davomiylikni tanlash
