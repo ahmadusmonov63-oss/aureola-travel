@@ -3,7 +3,7 @@
  * 100% Haqiqiy O'zbekiston yodgorliklari fotosuratlari
  */
 
-const DATA_VERSION = "6.0";
+const DATA_VERSION = "7.0";
 
 const UI_STRINGS = {
   uz: {
@@ -740,12 +740,12 @@ const DEFAULT_TOURS = [
     basePricePerPerson: 420000,
     hotelPricePerNight: 550000,
     guidePricePerDay: 200000,
-    mainImage: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Charvak_Reservoir.jpg",
+    mainImage: "https://upload.wikimedia.org/wikipedia/commons/e/e1/Charvak_Reservoir_and_Mountains.jpg",
     gallery: [
-      "https://upload.wikimedia.org/wikipedia/commons/e/ec/Charvak_Reservoir.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/e/e1/Charvak_Reservoir_and_Mountains.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/1/19/Bo%27stonliq_Amirsoy_01.jpg",
       "https://upload.wikimedia.org/wikipedia/commons/b/be/Uzbekistan_Chimgan_Mountains.jpg",
-      "https://upload.wikimedia.org/wikipedia/commons/a/ac/Greater_Chimgan_Mountain.JPG",
-      "https://upload.wikimedia.org/wikipedia/commons/6/6e/Chimgan_ski.JPG"
+      "https://upload.wikimedia.org/wikipedia/commons/a/ac/Greater_Chimgan_Mountain.JPG"
     ],
     durationDays: [1, 2, 3, 4],
     highlights: {
