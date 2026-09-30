@@ -3,7 +3,7 @@
  * 100% Haqiqiy O'zbekiston yodgorliklari fotosuratlari
  */
 
-const DATA_VERSION = "4.0";
+const DATA_VERSION = "5.0";
 
 const UI_STRINGS = {
   uz: {
@@ -55,7 +55,7 @@ const UI_STRINGS = {
     guideLangEn: "🇬🇧 Ingliz tili",
     heroBadge: "Aureon Travel — Sayohatlaringizning ishonchli hamrohi",
     heroTitle: "O'zbekistonning Eng Go'zal Shaharlari va Tabiatini Kiring",
-    heroDesc: "Siz uchun maxsus 6 ta asosiy yo'nalish: Toshkent poytaxti, Amirsoy va Chimyon tog'lari, go'zal Zomin tabiati hamda qadimiy Samarqand, Buxoro va Xiva!",
+    heroDesc: "Siz uchun maxsus 8 ta asosiy yo'nalish: Toshkent poytaxti, Amirsoy kurorti, Chimyon cho'qqilari, Chorvoq ko'li, go'zal Zomin tabiati hamda qadimiy Samarqand, Buxoro va Xiva!",
     btnExplore: "Yo'nalishlarni Ko'rish",
     btnCalc: "Narxni Hisoblash",
     advTransfer: "Mehmonxonadan Transfer",
@@ -195,7 +195,7 @@ const UI_STRINGS = {
     breakdownHotel: "Mehmonxona:",
     breakdownGuide: "Gid xizmati:",
     instantConfirmationNotice: "🔒 Buyurtmangiz zudlik bilan konsyerj va Telegram botimizga yetkaziladi.",
-    allToursNotice: "Bizning 6 ta eksklyuziv yo'nalishimiz:",
+    allToursNotice: "Bizning 8 ta eksklyuziv yo'nalishimiz:",
     currencyRate: "Valyuta kursi:"
   },
   ru: {
@@ -247,7 +247,7 @@ const UI_STRINGS = {
     guideLangEn: "🇬🇧 Английский язык",
     heroBadge: "Aureon Travel — Ваш надежный спутник в путешествиях",
     heroTitle: "Откройте для себя красивейшие города и природу Узбекистана",
-    heroDesc: "Специально для вас 6 главных направлений: столица Ташкент, горы Амирсой и Чимган, живописный Заамин, а также древние Самарканд, Бухара и Хива!",
+    heroDesc: "Специально для вас 8 главных направлений: столица Ташкент, курорт Амирсой, горы Чимган, озеро Чарвак, живописный Заамин, а также древние Самарканд, Бухара и Хива!",
     btnExplore: "Смотреть направления",
     btnCalc: "Рассчитать стоимость",
     advTransfer: "Трансфер из отеля",
@@ -387,7 +387,7 @@ const UI_STRINGS = {
     breakdownHotel: "Проживание в отеле:",
     breakdownGuide: "Услуги гида:",
     instantConfirmationNotice: "🔒 Заявка мгновенно передается нашему консьержу и в Telegram бот.",
-    allToursNotice: "Наши 6 эксклюзивных направлений:",
+    allToursNotice: "Наши 8 эксклюзивных направлений:",
     currencyRate: "Курс валюты:"
   },
   en: {
@@ -439,7 +439,7 @@ const UI_STRINGS = {
     guideLangEn: "🇬🇧 English language",
     heroBadge: "Aureon Travel — Your trusted travel companion",
     heroTitle: "Discover the Most Beautiful Cities and Nature of Uzbekistan",
-    heroDesc: "Curated 6 major destinations: capital Tashkent, Amirsoy & Chimgan mountains, picturesque Zaamin, and ancient Samarkand, Bukhara & Khiva!",
+    heroDesc: "Curated 8 major destinations: capital Tashkent, Amirsoy resort, Chimgan peaks, Charvak lake, picturesque Zaamin, and ancient Samarkand, Bukhara & Khiva!",
     btnExplore: "Explore Tours",
     btnCalc: "Calculate Price",
     advTransfer: "Hotel Pickup & Transfer",
@@ -579,7 +579,7 @@ const UI_STRINGS = {
     breakdownHotel: "Hotel stay:",
     breakdownGuide: "Guide service:",
     instantConfirmationNotice: "🔒 Booking instantly sent to our concierge and Telegram bot.",
-    allToursNotice: "Our 6 exclusive destinations:",
+    allToursNotice: "Our 8 exclusive destinations:",
     currencyRate: "Exchange rate:"
   }
 };
@@ -715,117 +715,345 @@ const DEFAULT_TOURS = [
     }
   },
   {
-    id: "toglar",
+    id: "amirsoy",
     title: {
-      uz: "Tog'li hududlar (Amirsoy, Chimyon, Chorvoq)",
-      ru: "Горные курорты (Амирсой, Чимган, Чарвак)",
-      en: "Mountain Resorts (Amirsoy, Chimgan, Charvak)"
+      uz: "Amirsoy tog' kurorti",
+      ru: "Горный курорт Амирсой",
+      en: "Amirsoy Mountain Resort"
     },
     subtitle: {
-      uz: "Maftunkor tabiat, toza havo va tog' kurortlari",
-      ru: "Живописная природа, чистый воздух и горный отдых",
-      en: "Breathtaking nature, crisp mountain air & alpine resorts"
+      uz: "Jahon andozasidagi zamonaviy osma yo'llar va alp manzaralari",
+      ru: "Современные канатные дороги мирового уровня и альпийские пейзажи",
+      en: "World-class modern cable gondolas and alpine mountain scenery"
     },
     badge: {
-      uz: "Tabiat & Dam olish",
-      ru: "Природа и отдых",
-      en: "Nature & Leisure"
+      uz: "Tog' kurorti",
+      ru: "Горный курорт",
+      en: "Mountain Resort"
     },
-    badgeColor: "bg-cyan-500",
+    badgeColor: "bg-blue-600",
     location: {
-      uz: "Bo'stonliq tumani, Toshkent viloyati",
-      ru: "Бостанлыкский район, Ташкентская область",
-      en: "Bostanlyk district, Tashkent region"
+      uz: "Bo'stonliq tumani, Amirsoy",
+      ru: "Бостанлыкский район, Амирсой",
+      en: "Bostanlyk district, Amirsoy"
     },
-    basePricePerPerson: 420000,
-    hotelPricePerNight: 550000,
+    basePricePerPerson: 450000,
+    hotelPricePerNight: 650000,
     guidePricePerDay: 200000,
-    mainImage: "https://upload.wikimedia.org/wikipedia/commons/e/ec/Charvak_Reservoir.jpg",
+    mainImage: "https://upload.wikimedia.org/wikipedia/commons/1/19/Bo%27stonliq_Amirsoy_01.jpg",
     gallery: [
-      "https://upload.wikimedia.org/wikipedia/commons/e/ec/Charvak_Reservoir.jpg",
-      "https://upload.wikimedia.org/wikipedia/commons/b/be/Uzbekistan_Chimgan_Mountains.jpg",
-      "https://upload.wikimedia.org/wikipedia/commons/a/ac/Greater_Chimgan_Mountain.JPG",
-      "https://upload.wikimedia.org/wikipedia/commons/6/6e/Chimgan_ski.JPG"
+      "https://upload.wikimedia.org/wikipedia/commons/1/19/Bo%27stonliq_Amirsoy_01.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/e/e6/Bo%27stonliq_Amirsoy_03.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/7/76/Chalets_at_Amirsoy_Resort.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/4/49/Bo%27stonliq_Amirsoy_04.jpg"
     ],
-    durationDays: [1, 2, 3, 4],
+    durationDays: [1, 2, 3],
     highlights: {
       uz: [
-        "Ko'm-ko'k Chorvoq suv ombori bo'yida dam olish",
-        "Katta Chimyon tog' cho'qqilari va Beldersoy darasi",
-        "Amirsoy Mountain Resort - zamonaviy osma gondolalar",
-        "Tog' daryolari bo'yida xushmanzara milliy choyxonalar",
-        "Paraplanda uchish, kater va otda sayr qilish imkoniyati"
+        "Amirsoy Mountain Resort zamonaviy gondola va osma kanat yo'llari (2290 metrgacha)",
+        "Chotqol tog' tizmasining qorli cho'qqilari va musaffo archazor havosi",
+        "Alp uslubidagi shinam yog'och chaletlar va tog' kafelari",
+        "Tog' cho'qqisidagi panoramik fotolokatsiyalar va zamonaviy servis",
+        "Mavsumiy ko'ngilochar xizmatlar: kvadrotsikllar, qor va tog' velosipedlari"
       ],
       ru: [
-        "Бирюзовые воды Чарвакского водохранилища",
-        "Вершины Большого Чимгана и ущелье Бельдерсай",
-        "Курорт Amirsoy - современные гондольные канатные дороги",
-        "Аутентичные горные чайханы у кристальных рек",
-        "Катание на катерах, квадроциклах и прогулки на лошадях"
+        "Современные гондольные канатные дороги курорта Amirsoy (подъем до 2290 м)",
+        "Заснеженные вершины Чаткальского хребта и чистейший горный воздух",
+        "Уютные альпийские шале и панорамные рестораны на склонах",
+        "Фотолокации на вершине с видом на бескрайние горные хребты",
+        "Сезонные развлечения: квадроциклы, горные велосипеды и тюбинг"
       ],
       en: [
-        "Turquoise waters of scenic Charvak Reservoir",
-        "Majestic Greater Chimgan peaks and Beldersay valley",
-        "Amirsoy Mountain Resort modern cable gondolas",
-        "Traditional teahouses along mountain rivers",
-        "Boating, paragliding and horseback riding activities"
+        "Modern cable gondola lifts at Amirsoy Resort reaching 2,290m altitude",
+        "Breathtaking snowy peaks of Chatkal Ridge and pristine alpine air",
+        "Alpine-style luxury chalets and panoramic slope-side restaurants",
+        "Stunning mountain summit photospots and world-class resort service",
+        "Seasonal mountain activities: quad bikes, mountain biking and tubing"
       ]
     },
     activities: {
       uz: [
-        "08:30 - Toshkentdan Bo'stonliq tog' tizmasiga yo'lga chiqish",
-        "10:00 - Amirsoy kurortiga yetib kelish, osma yo'lda cho'qqiga ko'tarilish (2290 metr)",
-        "12:00 - Tog' cho'qqisida foto-sessiya va musaffo tog' havosidan bahramand bo'lish",
-        "13:30 - Chorvoq bo'yida milliy qovurma baliq va tandir go'shti bilan tushlik",
-        "15:30 - Chorvoq suv omborida yaxta, kater va suv sportlari bilan tanishuv",
-        "17:30 - Chimyon vodiysi bo'ylab otda sayr yoki sokin tabiat qo'ynida dam olish",
-        "19:00 - Tog' oteliga joylashish yoki shahar sari qaytish"
+        "08:30 - Toshkentdan qulay konditsionerli transportda Amirsoy tomon yo'lga chiqish",
+        "10:00 - Amirsoy kurortiga yetib kelish, zamonaviy gondolada 2290 metr cho'qqiga ko'tarilish",
+        "11:30 - Cho'qqidagi panoramik maydonchada fotosessiya va tog' havosi zavqi",
+        "13:00 - Amirsoy restoranida tog' manzarasi hamrohligida mazali tushlik",
+        "15:00 - Kurort hududida sayr, alp arxitekturasi va dam olish maskanlari bilan tanishuv",
+        "17:00 - Tog' etagida yengil choy ichish va esdalik sovg'alar xaridi",
+        "18:30 - Mehmonxonaga joylashish yoki Toshkentga qaytish"
       ],
       ru: [
-        "08:30 - Выезд из Ташкента в сторону гор Бостанлыка",
-        "10:00 - Прибытие на курорт Amirsoy, подъем на канатке на вершину (2290 м)",
-        "12:00 - Фотосессия на вершине и наслаждение горным воздухом",
-        "13:30 - Обед на берегу Чарвака: свежая форель и традиционное горное мясо",
-        "15:30 - Прогулка на катере по Чарвакскому водохранилищу",
-        "17:30 - Конная прогулка по урочищу Чимган или отдых на природе",
-        "19:00 - Заселение в горный отель или возвращение в Ташкент"
+        "08:30 - Выезд из Ташкента на комфортабельном авто в курорт Амирсой",
+        "10:00 - Прибытие в Amirsoy, подъем на гондоле на высоту 2290 метров",
+        "11:30 - Фотосессия на панорамной террасе и прогулка по горным тропам",
+        "13:00 - Обед в панорамном ресторане с видом на склоны",
+        "15:00 - Отдых на курорте, посещение альпийской деревни шале",
+        "17:00 - Горный чай на террасе и покупка памятных сувениров",
+        "18:30 - Заселение в отель или обратный выезд в Ташкент"
       ],
       en: [
-        "08:30 - Departure from hotel towards Bostanlyk mountain ranges",
-        "10:00 - Arrive at Amirsoy Resort, scenic gondola ride to the summit (2290m)",
-        "12:00 - Mountain peak panorama photoshoot and alpine air experience",
-        "13:30 - Lakefront lunch: famous Charvak fried trout and tandoor meat",
-        "15:30 - Boat cruise and leisure on Charvak lake",
-        "17:30 - Horseback riding in Chimgan valley or relaxation in nature",
-        "19:00 - Check-in at mountain lodge or return drive to Tashkent"
+        "08:30 - Departure from Tashkent in comfortable private vehicle towards Amirsoy",
+        "10:00 - Arrival at Amirsoy Resort, scenic gondola ride to the summit (2,290m)",
+        "11:30 - Panoramic observation terrace photoshoot and alpine hiking",
+        "13:00 - Gourmet lunch at panoramic mountain-view restaurant",
+        "15:00 - Leisure walk through alpine chalet village and entertainment zone",
+        "17:00 - Herbal mountain tea tasting and local souvenir shopping",
+        "18:30 - Check-in at mountain resort hotel or return drive to Tashkent"
       ]
     },
     sights: {
       uz: [
-        "Chotqol tog' tizmasining go'zal panoramalari",
-        "Chorvoq suv omborining firuza rang suvlari va tog' archazorlari",
-        "Xalqaro andozalardagi eng yirik tog'-chang'i kurorti infratuzilmasi"
+        "Markaziy Osiyodagi eng ilg'or tog' kurorti infratuzilmasi",
+        "Amirsoy vodiysi va Chotqol tog'larining 360 darajali panoramasi",
+        "Toza baland tog' iqlimi va archazor tabiat muhiti"
       ],
       ru: [
-        "Захватывающие панорамы Чаткальского хребта",
-        "Бирюзовая гладь Чарвака и вековые реликтовые арчи",
-        "Инфраструктура современного горнолыжного курорта международного класса"
+        "Инфраструктура самого передового горного курорта Центральной Азии",
+        "Круговая панорама Чаткальских гор на 360 градусов",
+        "Целебный высокогорный климат и хвойные реликтовые леса"
       ],
       en: [
-        "Stunning panoramas of the Chatkal mountain ridge",
-        "Turquoise waters of Charvak lake and juniper forests",
-        "World-class modern alpine resort amenities"
+        "Central Asia's premier alpine resort infrastructure",
+        "360-degree panoramic vista across the Chatkal mountain ridge",
+        "Crisp therapeutic alpine climate and natural juniper forests"
       ]
     },
     included: {
-      uz: ["Barcha yo'l bo'ylab qulay transfer", "Amirsoy kanat yo'liga kirish chiptasi", "Mineral tog' suvlari va yengil tamaddi"],
-      ru: ["Комфортабельный трансфер на весь маршрут", "Билет на канатную дорогу Amirsoy", "Горная минеральная вода и легкий перекус"],
-      en: ["Comfortable transfer along whole route", "Amirsoy cable car ticket", "Mountain mineral water and light snacks"]
+      uz: ["Barcha yo'l bo'ylab qulay transport / transfer", "Amirsoy kanat yo'liga kirish chiptasi", "Mineral suv va yo'l davomidagi yengil tamaddi"],
+      ru: ["Комфортабельный трансфер на весь маршрут", "Билет на гондольную канатную дорогу Amirsoy", "Горная минеральная вода и легкий перекус"],
+      en: ["Comfortable transfer throughout the entire route", "Amirsoy cable car gondola admission ticket", "Bottled mineral water and light refreshments"]
     },
     notIncluded: {
-      uz: ["Paraplan va kater xizmatlari (ixtiyoriy)", "Gid xizmati (ixtiyoriy)"],
-      ru: ["Катер и параплан (по желанию)", "Услуги гида (по желанию)"],
-      en: ["Paragliding and speedboats (optional)", "Guide service (optional)"]
+      uz: ["Kvadrotsikl va qor texnikasi ijarasi (ixtiyoriy)", "Gid xizmati (ixtiyoriy, buyurtmada tanlanadi)"],
+      ru: ["Аренда квадроциклов и снегоходов (по желанию)", "Услуги гида (по желанию при заказе)"],
+      en: ["Quad bikes and sports equipment rental (optional)", "Guide service (optional upon booking)"]
+    }
+  },
+  {
+    id: "chimyon",
+    title: {
+      uz: "Chimyon va Beldersoy tog'lari",
+      ru: "Горы Чимган и Бельдерсай",
+      en: "Chimgan Mountains & Beldersay"
+    },
+    subtitle: {
+      uz: "Katta Chimyon cho'qqisi, dor yo'llari va tog' daralari",
+      ru: "Вершины Большого Чимгана, канатная дорога и горные ущелья",
+      en: "Greater Chimgan peaks, open chairlifts & scenic mountain gorges"
+    },
+    badge: {
+      uz: "Alpinizm & Tabiat",
+      ru: "Альпинизм и природа",
+      en: "Alpine & Hiking"
+    },
+    badgeColor: "bg-emerald-600",
+    location: {
+      uz: "Bo'stonliq, Katta Chimyon etaklari",
+      ru: "Бостанлык, подножие Большого Чимгана",
+      en: "Bostanlyk, Greater Chimgan Foothills"
+    },
+    basePricePerPerson: 400000,
+    hotelPricePerNight: 500000,
+    guidePricePerDay: 200000,
+    mainImage: "https://upload.wikimedia.org/wikipedia/commons/b/be/Uzbekistan_Chimgan_Mountains.jpg",
+    gallery: [
+      "https://upload.wikimedia.org/wikipedia/commons/b/be/Uzbekistan_Chimgan_Mountains.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/a/ac/Greater_Chimgan_Mountain.JPG",
+      "https://upload.wikimedia.org/wikipedia/commons/1/15/Chimgan_07.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/3/31/Chimgan_11.jpg"
+    ],
+    durationDays: [1, 2, 3],
+    highlights: {
+      uz: [
+        "3309 metr balandlikdagi afsonaviy Katta Chimyon cho'qqisi manzaralari",
+        "Beldersoy va Chimyon ochiq dor yo'lida (kresloli osma yo'l) sayr",
+        "Gulkam kanyoni va sharsharalarga eltuvchi ekologik so'qmoqlar",
+        "Tog' etagidagi milliy choyxonalarda samovar choyi va qazi-kabob",
+        "Chimyon yashil yaylovlarida otda sayr qilish imkoniyati"
+      ],
+      ru: [
+        "Виды легендарного пика Большой Чимган (высота 3309 метров)",
+        "Подъем на открытой канатно-кресельной дороге Бельдерсая и Чимгана",
+        "Экологические тропы к ущелью Гулькам и горным водопадам",
+        "Чайхана с самоваром на углях и знаменитым горным шашлыком",
+        "Конные прогулки по живописным альпийским лугам Чимгана"
+      ],
+      en: [
+        "Iconic views of Greater Chimgan Peak rising to 3,309 meters",
+        "Scenic open-air chairlift ride over Beldersay and Chimgan valleys",
+        "Nature hiking trails towards Gulkam Canyon and refreshing waterfalls",
+        "Traditional mountain teahouse with coal samovar and grilled kebabs",
+        "Horseback riding across picturesque Chimgan alpine pastures"
+      ]
+    },
+    activities: {
+      uz: [
+        "08:30 - Toshkentdan go'zal Chimyon vodiysi sari yo'lga chiqish",
+        "10:15 - Chimyon tog' etagiga yetib kelish, ochiq kresloli dor yo'lida ko'tarilish",
+        "11:30 - Katta Chimyon manzaralari fonida fotosessiya va toza archa havosi",
+        "13:00 - Tog' daryosi bo'yidagi choyxonada barra qo'zichoq kabobi va shurva bilan tushlik",
+        "14:30 - Beldersoy darasi va sharsharalarga qisqa piyoda ekotur",
+        "16:30 - Yaylovlarda otda sayr yoki tog' asallari va dorivor giyohlar rastalari",
+        "18:30 - Mehmonxonaga joylashish yoki shahar tomon qaytish"
+      ],
+      ru: [
+        "08:30 - Выезд из Ташкента в живописную долину Чимгана",
+        "10:15 - Прибытие к Чимгану, подъем на канатно-кресельной дороге",
+        "11:30 - Фотосессия на фоне вершины Большой Чимган и прогулка",
+        "13:00 - Обед в горной чайхане: сочный бараний шашлык и шурпа",
+        "14:30 - Пеший эко-маршрут по Бельдерсайскому ущелью к родникам",
+        "16:30 - Конная прогулка по лугам или дегустация горного меда",
+        "18:30 - Заселение в горный отель или возвращение в Ташкент"
+      ],
+      en: [
+        "08:30 - Depart from Tashkent heading to scenic Chimgan Valley",
+        "10:15 - Arrive at Chimgan, thrilling ascent on open mountain chairlift",
+        "11:30 - Scenic photoshoot overlooking Greater Chimgan peak and pine forests",
+        "13:00 - Riverside teahouse lunch: authentic charcoal kebabs and traditional shurpa",
+        "14:30 - Short eco-hike through Beldersay gorge towards natural springs",
+        "16:30 - Horseback riding across meadows or sampling local mountain honey",
+        "18:30 - Check-in at mountain retreat or return journey to Tashkent"
+      ]
+    },
+    sights: {
+      uz: [
+        "Katta va Kichik Chimyonning betakror qoyali relyefi",
+        "Beldersoy darasining qadimiy archazorlari va musaffo buloqlari",
+        "Tog' tabiati, o'tloqlar va haqiqiy sharqona tog' mehmondo'stligi"
+      ],
+      ru: [
+        "Величественный рельеф Большого и Малого Чимгана",
+        "Реликтовые арчовые рощи и хрустальные родники Бельдерсая",
+        "Чистейший воздух, альпийские поляны и восточное горное гостеприимство"
+      ],
+      en: [
+        "Spectacular jagged rocky relief of Greater and Lesser Chimgan",
+        "Ancient juniper woodlands and crystalline springs of Beldersay",
+        "Pristine alpine air, wildflower pastures and heartfelt mountain hospitality"
+      ]
+    },
+    included: {
+      uz: ["Barcha yo'l bo'ylab qulay shaxsiy transport", "Chimyon/Beldersoy dor yo'liga chiqish", "Tog' buloq suvi va yo'lboshlovchi yordami"],
+      ru: ["Комфортабельный персональный транспорт на весь день", "Билет на канатную дорогу Чимгана/Бельдерсая", "Горная родниковая вода и помощь водителя-координатора"],
+      en: ["Comfortable private vehicle for the entire journey", "Chimgan/Beldersay chairlift ticket", "Spring mineral water and trip coordination"]
+    },
+    notIncluded: {
+      uz: ["Ot minish va shaxsiy xaridlar", "Gid xizmati (ixtiyoriy, buyurtmada tanlanadi)"],
+      ru: ["Конные прогулки и сувениры", "Услуги гида (по желанию при заказе)"],
+      en: ["Horse riding and personal souvenirs", "Guide service (optional upon booking)"]
+    }
+  },
+  {
+    id: "chorvoq",
+    title: {
+      uz: "Chorvoq suv ombori va sohil hordig'i",
+      ru: "Чарвакское водохранилище и пляжный отдых",
+      en: "Charvak Reservoir & Lakefront Getaway"
+    },
+    subtitle: {
+      uz: "Firuza suvlar, sohil bo'yida dam olish va suv sportlari",
+      ru: "Бирюзовая гладь воды, отдых на побережье и водные развлечения",
+      en: "Turquoise alpine waters, lakeside relaxation & watersports"
+    },
+    badge: {
+      uz: "Suv bo'yi & Dam olish",
+      ru: "Водный отдых",
+      en: "Lake & Beach"
+    },
+    badgeColor: "bg-cyan-500",
+    location: {
+      uz: "Bo'stonliq, Chorvoq sohili",
+      ru: "Бостанлык, побережье Чарвака",
+      en: "Bostanlyk, Charvak Coastline"
+    },
+    basePricePerPerson: 380000,
+    hotelPricePerNight: 550000,
+    guidePricePerDay: 200000,
+    mainImage: "https://upload.wikimedia.org/wikipedia/commons/e/e1/Charvak_Reservoir_and_Mountains.jpg",
+    gallery: [
+      "https://upload.wikimedia.org/wikipedia/commons/e/e1/Charvak_Reservoir_and_Mountains.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/4/42/Chorvoq_ko%27li.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/c/ca/Clouds_over_the_Charvak_Reservoir.jpg",
+      "https://upload.wikimedia.org/wikipedia/commons/8/86/Charvak_Dam.jpg"
+    ],
+    durationDays: [1, 2, 3],
+    highlights: {
+      uz: [
+        "Ko'm-ko'k firuza rang Chorvoq suv havzasi bo'yida to'laqonli hordiq",
+        "Tezurar katerlar, yaxtalar va gidrotsikllarda ko'l bo'ylab sayr",
+        "Yusufxona va Chorvoq sohilidagi toza plyajlar va dam olish zonalari",
+        "Sohil bo'yidagi choyxonalarda qovurilgan yangi tog' foreli va somsalar",
+        "Chorvoq to'g'oni va tog'lar qo'ynidagi ko'l panoramasi"
+      ],
+      ru: [
+        "Отдых на бирюзовом побережье Чарвакского водохранилища",
+        "Прогулки на скоростных катерах, яхтах и водных мотоциклах",
+        "Оборудованные пляжные зоны и курортные зоны отдыха Юсуфхоны",
+        "Прибрежные рестораны со свежевыловленной форелью и горячими самсами",
+        "Панорамная смотровая площадка на Чарвакскую плотину и горы"
+      ],
+      en: [
+        "Complete relaxation on the shores of turquoise Charvak Reservoir",
+        "Cruising on speedboats, yachts and personal watercraft across the lake",
+        "Equipped beach recreation zones and lakeside resorts around Yusufkhona",
+        "Waterside dining: freshly fried mountain trout and authentic hot samsas",
+        "Spectacular panoramic viewpoints overlooking Charvak Dam and mountain ranges"
+      ]
+    },
+    activities: {
+      uz: [
+        "08:30 - Toshkentdan Chorvoq suv ombori tomon qulay yo'lga chiqish",
+        "10:00 - Chorvoq to'g'oni panoramik maydonchasida to'xtash va fotosessiya",
+        "11:00 - Sohil bo'yi dam olish maskaniga yetib kelish, sohil bo'yida xordiq",
+        "12:30 - Ko'lda tezurar kater yoki yaxtada suv sayriga chiqish",
+        "14:00 - Suv bo'yidagi qulay choyxonada mashhur Chorvoq qovurma balig'i bilan tushlik",
+        "16:00 - Plyajda quyoshda toblanish, suzish yoki gidrotsiklda uchish",
+        "18:00 - Sohil bo'ylab quyosh botishini tomosha qilish va qaytish/joylashish"
+      ],
+      ru: [
+        "08:30 - Выезд из Ташкента в сторону Чарвакского водохранилища",
+        "10:00 - Остановка на панорамной смотровой площадке плотины Чарвака",
+        "11:00 - Прибытие на побережье, размещение в пляжной зоне отдыха",
+        "12:30 - Прогулка на скоростном катере или яхте по лазурной глади",
+        "14:00 - Обед в ресторане у воды: жареная форель и свежие салаты",
+        "16:00 - Пляжный отдых, купание, аренда гидроциклов",
+        "18:00 - Закат над бирюзовым озером и возвращение либо отель"
+      ],
+      en: [
+        "08:30 - Morning departure from Tashkent towards Charvak Reservoir",
+        "10:00 - Photo stop at the panoramic viewpoint of Charvak Dam",
+        "11:00 - Arrival at lakeside beach resort area and leisure time",
+        "12:30 - Scenic speedboat or yacht cruise on azure waters",
+        "14:00 - Lakeside lunch featuring freshly cooked trout and traditional salads",
+        "16:00 - Sunbathing, swimming and optional jet ski rides",
+        "18:00 - Sunset viewing over the turquoise lake and hotel check-in or return"
+      ]
+    },
+    sights: {
+      uz: [
+        "To'rtta tog' daryosi (Pskem, Ko'ksuv, Chatqol, Ugom) tutashgan ulkan suv havzasi",
+        "Atrofi baland tog'lar bilan o'ralgan ko'm-ko'k sohil manzarasi",
+        "Markaziy Osiyodagi eng yirik to'g'onlardan biri"
+      ],
+      ru: [
+        "Грандиозный водоем слияния четырех горных рек (Пскем, Коксу, Чаткал, Угам)",
+        "Живописная акватория в кольце величественных горных хребтов",
+        "Одна из крупнейших насыпных плотин в регионе"
+      ],
+      en: [
+        "Grand reservoir formed by the confluence of Pskem, Koksu, Chatkal & Ugam rivers",
+        "Sparkling turquoise waters framed by soaring Tien Shan mountain ranges",
+        "One of the most impressive rockfill dams in Central Asia"
+      ]
+    },
+    included: {
+      uz: ["Barcha yo'l bo'ylab qulay transport / transfer", "Chorvoq panoramik maydonchalariga tashrif", "Muzdek ichimlik suvi"],
+      ru: ["Комфортабельный трансфер Ташкент — Чарвак — Ташкент", "Посещение видовых площадок плотины Чарвака", "Прохладительная бутилированная вода"],
+      en: ["Comfortable round-trip private transfer", "Access to scenic Charvak viewpoints", "Chilled bottled drinking water"]
+    },
+    notIncluded: {
+      uz: ["Kater, yaxta va gidrotsikl ijarasi (joyida ixtiyoriy to'lanadi)", "Gid xizmati (ixtiyoriy, buyurtmada tanlanadi)"],
+      ru: ["Аренда катера, яхты и водных мотоциклов (оплата на месте по выбору)", "Услуги гида (по желанию при заказе)"],
+      en: ["Boat, yacht and jet ski rentals (optional on site)", "Guide service (optional upon booking)"]
     }
   },
   {
@@ -1695,7 +1923,25 @@ const TOUR_DESTINATIONS = {
   amirsoy: {
     lat: 41.5167,
     lon: 70.0167,
-    name: { uz: "Amirsoy va Chimyon tog'lari", ru: "Горы Амирсой и Чимган", en: "Amirsoy & Chimgan Mountains" },
+    name: { uz: "Amirsoy tog' kurorti", ru: "Горный курорт Амирсой", en: "Amirsoy Mountain Resort" },
+    isMountain: true
+  },
+  chimyon: {
+    lat: 41.5333,
+    lon: 70.0167,
+    name: { uz: "Chimyon va Beldersoy", ru: "Горы Чимган и Бельдерсай", en: "Chimgan & Beldersay Mountains" },
+    isMountain: true
+  },
+  chorvoq: {
+    lat: 41.6333,
+    lon: 70.0333,
+    name: { uz: "Chorvoq suv ombori", ru: "Чарвакское водохранилище", en: "Charvak Reservoir" },
+    isMountain: true
+  },
+  toglar: {
+    lat: 41.5167,
+    lon: 70.0167,
+    name: { uz: "Tog'li hududlar", ru: "Горные курорты", en: "Mountain Resorts" },
     isMountain: true
   },
   zomin: {
@@ -1714,6 +1960,12 @@ const TOUR_DESTINATIONS = {
     lat: 39.7747,
     lon: 64.4286,
     name: { uz: "Buxoro shahri", ru: "Город Бухара", en: "Bukhara City" },
+    isMountain: false
+  },
+  xorazm: {
+    lat: 41.3783,
+    lon: 60.3639,
+    name: { uz: "Xiva (Ichan-Qal'a)", ru: "Город Хива (Ичан-Кала)", en: "Khiva (Ichan-Kala)" },
     isMountain: false
   },
   xiva: {
