@@ -3,7 +3,7 @@
  * 100% Haqiqiy O'zbekiston yodgorliklari fotosuratlari
  */
 
-const DATA_VERSION = "7.0";
+const DATA_VERSION = "8.0";
 
 const UI_STRINGS = {
   uz: {
@@ -125,12 +125,16 @@ const UI_STRINGS = {
     lblName: "Ism va Familiyangiz *",
     phName: "Masalan: Azizbek Karimov",
     lblPhone: "Telefon raqamingiz *",
+    lblEmail: "Elektron pochta (Email) *",
+    phEmail: "Masalan: azizbek@gmail.com",
+    hintEmail: "SMS yoki Telegram ishlamagan taqdirda tasdiqnoma emailingizga yuboriladi",
     lblRoom: "Mehmonxona yoki xona raqamingiz *",
     phRoom: "Masalan: 305-xona yoki Hyatt Regency",
     lblNote: "Qo'shimcha istaklar yoki izoh *",
     phNote: "Masalan: Maxsus talablar yo'q yoki aeroportdan kutib olish...",
     valErrName: "Iltimos, ism va familiyangizni to'liq kiriting (kamida 2 ta so'z)",
     valErrPhone: "Iltimos, to'liq telefon raqam kiriting (kamida 9 ta raqam)",
+    valErrEmail: "Iltimos, to'g'ri elektron pochta manzilini kiriting (masalan: ismingiz@gmail.com)",
     valErrRoom: "Iltimos, mehmonxona yoki xona raqamingizni kiriting",
     valErrDate: "Iltimos, sayohat boshlanish sanasini belgilang",
     valErrNote: "Iltimos, istaklaringizni yozing yoki quyidagi tayyor variantlardan birini bosing",
@@ -317,12 +321,16 @@ const UI_STRINGS = {
     lblName: "Ваше имя и фамилия *",
     phName: "Например: Азизбек Каримов",
     lblPhone: "Номер телефона *",
+    lblEmail: "Электронная почта (Email) *",
+    phEmail: "Например: azizbek@gmail.com",
+    hintEmail: "Если SMS или Telegram недоступны, подтверждение будет отправлено на ваш email",
     lblRoom: "Отель или номер комнаты *",
     phRoom: "Например: номер 305 или Hyatt Regency",
     lblNote: "Особые пожелания или комментарий *",
     phNote: "Например: Особых пожеланий нет или трансфер из аэропорта...",
     valErrName: "Пожалуйста, введите имя и фамилию полностью (минимум 2 слова)",
     valErrPhone: "Пожалуйста, введите корректный номер телефона (не менее 9 цифр)",
+    valErrEmail: "Пожалуйста, введите корректный адрес электронной почты (например: name@gmail.com)",
     valErrRoom: "Пожалуйста, укажите отель или номер комнаты",
     valErrDate: "Пожалуйста, выберите дату начала поездки",
     valErrNote: "Пожалуйста, укажите пожелания или нажмите готовый вариант ниже",
@@ -509,12 +517,16 @@ const UI_STRINGS = {
     lblName: "Full Name *",
     phName: "E.g.: John Smith",
     lblPhone: "Phone Number *",
+    lblEmail: "Email Address *",
+    phEmail: "E.g.: name@gmail.com",
+    hintEmail: "In case SMS or Telegram is unreachable, confirmation will be delivered to your email",
     lblRoom: "Hotel or Room Number *",
     phRoom: "E.g.: Room 305 or Hyatt Regency",
     lblNote: "Special Requests or Notes *",
     phNote: "E.g.: No special requests or Airport pickup...",
     valErrName: "Please enter your full first and last name (at least 2 words)",
     valErrPhone: "Please enter a valid phone number (at least 9 digits)",
+    valErrEmail: "Please enter a valid email address (e.g., name@gmail.com)",
     valErrRoom: "Please specify your hotel or room number",
     valErrDate: "Please select a tour start date",
     valErrNote: "Please write your preferences or click one of the quick options below",

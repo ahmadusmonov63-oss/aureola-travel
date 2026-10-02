@@ -11,6 +11,7 @@ let searchQuery = "";
 document.addEventListener("DOMContentLoaded", () => {
   loadData();
   setupTelegramConfig();
+  setupEmailConfig();
   updateRateDisplay();
 
   // Oxirgi tanlangan tabni avtomatik ochish (sahifa yangilanganda ham shu tabda qoladi)
@@ -29,14 +30,19 @@ document.addEventListener("DOMContentLoaded", () => {
     if (e.key === STORAGE_KEYS.TELEGRAM || e.key === "aureon_tg_token" || e.key === "aureon_tg_chat_id") {
       setupTelegramConfig();
     }
+    if (e.key === "aureon_email_config") {
+      setupEmailConfig();
+    }
   });
 
   // Sahifa yangilanganda yoki yopilganda ma'lumotlar o'chib ketmasligi uchun
   window.addEventListener("beforeunload", () => {
     autoSaveTelegramInputs();
+    autoSaveEmailInputs();
   });
   window.addEventListener("pagehide", () => {
     autoSaveTelegramInputs();
+    autoSaveEmailInputs();
   });
 });
 
@@ -188,9 +194,10 @@ function renderBookingsTable() {
       const q = searchQuery.toLowerCase();
       const nameMatch = (b.guestName || "").toLowerCase().includes(q);
       const phoneMatch = (b.guestPhone || "").toLowerCase().includes(q);
+      const emailMatch = (b.guestEmail || "").toLowerCase().includes(q);
       const idMatch = (b.id || "").toLowerCase().includes(q);
       const tourMatch = (b.tourTitle || "").toLowerCase().includes(q);
-      return nameMatch || phoneMatch || idMatch || tourMatch;
+      return nameMatch || phoneMatch || emailMatch || idMatch || tourMatch;
     }
     return true;
   });
@@ -241,6 +248,12 @@ function renderBookingsTable() {
           <i class="fa-solid fa-phone text-slate-400 text-[10px]"></i>
           <a href="tel:${b.guestPhone}" class="hover:underline text-brand-600 font-semibold">${b.guestPhone}</a>
         </div>
+        ${b.guestEmail ? `
+        <div class="text-xs text-slate-500 flex items-center gap-1">
+          <i class="fa-solid fa-envelope text-amber-500 text-[10px]"></i>
+          <a href="mailto:${b.guestEmail}" class="hover:underline text-slate-600 truncate max-w-[170px]" title="${b.guestEmail}">${b.guestEmail}</a>
+        </div>
+        ` : ''}
         <div class="text-[11px] text-slate-500 truncate max-w-[200px]" title="${b.pickupLocation || b.roomNumber || ''}">
           <i class="fa-solid fa-location-dot text-amber-500 text-[10px]"></i> <strong class="text-slate-800">${b.pickupLocation || b.roomNumber || 'Ko\'rsatilmadi'}</strong>
         </div>
@@ -279,6 +292,9 @@ function renderBookingsTable() {
       <td class="p-4 text-right space-x-1 whitespace-nowrap">
         <button onclick="viewBookingDetail('${b.id}')" class="p-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs" title="Batafsil ko'rish">
           <i class="fa-solid fa-eye"></i>
+        </button>
+        <button onclick="openEmailComposeModal('${b.id}')" class="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-200 text-xs font-bold" title="Email orqali bog'lanish / xat yozish">
+          <i class="fa-solid fa-envelope text-amber-600"></i>
         </button>
         <button onclick="openWeatherAlertModal('${b.id}')" class="p-1.5 rounded-lg bg-sky-50 hover:bg-sky-100 text-sky-800 border border-sky-200 text-xs font-bold" title="Ob-havo va konsyerj eslatmasi">
           <i class="fa-solid fa-cloud-sun text-amber-500"></i>
@@ -606,10 +622,13 @@ Hurmat bilan, Aureon Travel ✈️`;
   if (preview) preview.value = message;
 
   // Update 1-click links
-  updateDispatchLinks(b.guestPhone, message);
+  const statusSubject = isConfirmed 
+    ? (clientLang === 'ru' ? 'Подтверждение бронирования - Aureon Travel' : clientLang === 'en' ? 'Booking Confirmation - Aureon Travel' : 'Broningiz tasdiqlandi - Aureon Travel')
+    : (clientLang === 'ru' ? 'Отмена бронирования - Aureon Travel' : clientLang === 'en' ? 'Booking Cancellation - Aureon Travel' : 'Bron bekor qilindi - Aureon Travel');
+  updateDispatchLinks(b.guestPhone, message, b.guestEmail, statusSubject);
 }
 
-function updateDispatchLinks(phone, message) {
+function updateDispatchLinks(phone, message, email, subject) {
   const digits = (phone || "").replace(/\D/g, "");
   const encoded = encodeURIComponent(message);
 
@@ -626,6 +645,12 @@ function updateDispatchLinks(phone, message) {
   const smsBtn = document.getElementById("btn-dispatch-sms");
   if (smsBtn) {
     smsBtn.href = `sms:${phone || ''}?body=${encoded}`;
+  }
+
+  const emailBtn = document.getElementById("btn-dispatch-email");
+  if (emailBtn) {
+    const encSub = encodeURIComponent(subject || "Aureon Travel - Xabar");
+    emailBtn.href = email ? `mailto:${email}?subject=${encSub}&body=${encoded}` : `mailto:?subject=${encSub}&body=${encoded}`;
   }
 }
 
@@ -757,6 +782,7 @@ function viewBookingDetail(bookingId) {
     <div class="space-y-2">
       <div><strong>Mehmon:</strong> ${b.guestName}</div>
       <div><strong>Telefon:</strong> <a href="tel:${b.guestPhone}" class="text-brand-600 underline font-semibold">${b.guestPhone}</a></div>
+      <div><strong>Email manzili:</strong> ${b.guestEmail ? `<a href="mailto:${b.guestEmail}" class="text-amber-700 underline font-semibold">${b.guestEmail}</a>` : '<span class="text-slate-400 italic">Kiritilmagan</span>'}</div>
       <div><strong>Olib ketish nuqtasi:</strong> <span class="font-bold text-slate-800">${b.pickupLocation || b.roomNumber || 'Ko\'rsatilmadi'}</span> <span class="text-xs text-slate-500">(${b.pickupType || 'Manzil'})</span></div>
       <hr class="border-slate-100">
       <div><strong>Yo'nalish:</strong> ${b.tourTitleLocalized || b.tourTitle} (${b.location || ''})</div>
@@ -772,7 +798,10 @@ function viewBookingDetail(bookingId) {
         <span class="text-amber-600">${formatCurrency(b.totalPrice)}</span>
       </div>
       <hr class="border-slate-100">
-      <div class="flex items-center justify-end gap-2 pt-2">
+      <div class="flex flex-wrap items-center justify-end gap-2 pt-2">
+        <button onclick="closeBookingDetailModal(); openEmailComposeModal('${b.id}')" class="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs flex items-center gap-1.5 shadow-sm">
+          <i class="fa-solid fa-envelope"></i> Email xat yozish
+        </button>
         ${b.status !== "Tasdiqlandi" ? `
           <button onclick="closeBookingDetailModal(); openStatusActionModal('${b.id}', 'Tasdiqlandi')" class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm">
             <i class="fa-solid fa-check"></i> Tasdiqlash & Xabar yuborish
@@ -1536,6 +1565,12 @@ function updateWeatherDispatchLinks(b, message) {
   if (smsBtn) {
     smsBtn.href = `sms:${cleanPhone}?body=${encodedText}`;
   }
+
+  const emailBtn = document.getElementById("btn-weather-email");
+  if (emailBtn) {
+    const encSubject = encodeURIComponent(`Aureon Travel - Ob-havo va sayohat eslatmasi`);
+    emailBtn.href = b.guestEmail ? `mailto:${b.guestEmail}?subject=${encSubject}&body=${encodedText}` : `mailto:?subject=${encSubject}&body=${encodedText}`;
+  }
 }
 
 function copyWeatherMessageToClipboard() {
@@ -1551,4 +1586,520 @@ function copyWeatherMessageToClipboard() {
 function closeWeatherAlertModal() {
   const modal = document.getElementById("weather-alert-modal");
   if (modal) modal.classList.add("hidden");
+}
+
+/* ==========================================================================
+   EMAIL DISPATCH & SMTP CONFIGURATION SYSTEM
+   ========================================================================== */
+
+let currentEmailBooking = null;
+let currentEmailLang = 'uz';
+let emailConfig = {
+  host: '',
+  port: 465,
+  user: '',
+  pass: '',
+  senderName: 'Aureon Travel',
+  testEmail: ''
+};
+
+function setupEmailConfig() {
+  try {
+    const raw = localStorage.getItem("aureon_email_config");
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      emailConfig = { ...emailConfig, ...parsed };
+    }
+  } catch (e) {
+    console.error("Failed to parse email config", e);
+  }
+
+  // Populate inputs in settings tab
+  const hostInp = document.getElementById("smtp-host");
+  const portInp = document.getElementById("smtp-port");
+  const userInp = document.getElementById("smtp-user");
+  const passInp = document.getElementById("smtp-pass");
+  const senderInp = document.getElementById("smtp-sender-name");
+  const testInp = document.getElementById("smtp-test-email");
+
+  if (hostInp && emailConfig.host) hostInp.value = emailConfig.host;
+  if (portInp && emailConfig.port) portInp.value = emailConfig.port;
+  if (userInp && emailConfig.user) userInp.value = emailConfig.user;
+  if (passInp && emailConfig.pass) passInp.value = emailConfig.pass;
+  if (senderInp && emailConfig.senderName) senderInp.value = emailConfig.senderName;
+  if (testInp && emailConfig.testEmail) testInp.value = emailConfig.testEmail;
+
+  // Realtime autosave listeners
+  [hostInp, portInp, userInp, passInp, senderInp, testInp].forEach(el => {
+    if (el) {
+      el.addEventListener("input", autoSaveEmailInputs);
+    }
+  });
+
+  // Attach compose live update listeners
+  const compTo = document.getElementById("email-compose-to");
+  const compSub = document.getElementById("email-compose-subject");
+  const compBody = document.getElementById("email-compose-body");
+  [compTo, compSub, compBody].forEach(el => {
+    if (el) {
+      el.addEventListener("input", updateEmailMailtoLink);
+    }
+  });
+}
+
+function autoSaveEmailInputs() {
+  const host = document.getElementById("smtp-host")?.value.trim() || "";
+  const port = parseInt(document.getElementById("smtp-port")?.value.trim() || "465", 10);
+  const user = document.getElementById("smtp-user")?.value.trim() || "";
+  const pass = document.getElementById("smtp-pass")?.value.trim() || "";
+  const senderName = document.getElementById("smtp-sender-name")?.value.trim() || "Aureon Travel";
+  const testEmail = document.getElementById("smtp-test-email")?.value.trim() || "";
+
+  emailConfig = { host, port, user, pass, senderName, testEmail };
+  try {
+    localStorage.setItem("aureon_email_config", JSON.stringify(emailConfig));
+  } catch (e) {}
+
+  const indicator = document.getElementById("email-autosave-indicator");
+  if (indicator) {
+    indicator.classList.remove("opacity-0");
+    indicator.classList.add("opacity-100");
+    setTimeout(() => {
+      indicator.classList.remove("opacity-100");
+      indicator.classList.add("opacity-0");
+    }, 2000);
+  }
+}
+
+function handleSaveEmailConfig(e) {
+  if (e) e.preventDefault();
+  autoSaveEmailInputs();
+
+  const resDiv = document.getElementById("email-test-result");
+  if (resDiv) {
+    resDiv.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+    resDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Email (SMTP) sozlamalari muvaffaqiyatli saqlandi!';
+    setTimeout(() => { resDiv.classList.add("hidden"); }, 4000);
+  }
+}
+
+async function testEmailConnection() {
+  autoSaveEmailInputs();
+  const btn = document.getElementById("btn-test-email");
+  const resDiv = document.getElementById("email-test-result");
+
+  const testEmail = emailConfig.testEmail || emailConfig.user;
+  if (!testEmail) {
+    if (resDiv) {
+      resDiv.className = "p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
+      resDiv.innerHTML = '<i class="fa-solid fa-circle-exclamation text-rose-600 mr-1.5"></i> Iltimos, sinov uchun email manzilini yoki foydalanuvchi emailini kiriting!';
+    }
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-amber-600"></i> Yuborilmoqda...';
+  }
+  if (resDiv) {
+    resDiv.className = "p-3 rounded-xl text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 block";
+    resDiv.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> SMTP serveri bilan bog\'lanish va sinov xati yuborilmoqda...';
+  }
+
+  try {
+    const res = await fetch("/api/email/test", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        smtpConfig: emailConfig,
+        testEmail: testEmail
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (resDiv) {
+        resDiv.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+        resDiv.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Sinov xati <strong>${testEmail}</strong> manziliga muvaffaqiyatli yetkazildi! SMTP server to'g'ri sozlangan.`;
+      }
+    } else {
+      if (resDiv) {
+        resDiv.className = "p-3 rounded-xl text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200 block";
+        resDiv.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1.5"></i> <strong>Xatolik:</strong> ${data.error || "SMTP ulanishda xatolik yuz berdi. Server, port yoki maxsus parolni tekshiring."}`;
+      }
+    }
+  } catch (err) {
+    if (resDiv) {
+      resDiv.className = "p-3 rounded-xl text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200 block";
+      resDiv.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1.5"></i> Serverga so'rov yuborishda tarmoq xatosi: ${err.message}`;
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="fa-solid fa-paper-plane text-amber-600"></i> Test Email Yuborish';
+    }
+  }
+}
+
+// EMAIL COMPOSE MODAL LOGIC
+function openEmailComposeModal(bookingId) {
+  const b = allBookings.find(item => item.id === bookingId);
+  if (!b) return;
+
+  currentEmailBooking = b;
+  currentEmailLang = b.clientLang || 'uz';
+
+  const modal = document.getElementById("email-compose-modal");
+  const nameEl = document.getElementById("email-guest-name");
+  const idEl = document.getElementById("email-booking-id");
+  const tourEl = document.getElementById("email-tour-badge");
+  const phoneEl = document.getElementById("email-guest-phone");
+  const dateEl = document.getElementById("email-guest-date");
+  const toEl = document.getElementById("email-compose-to");
+  const alertEl = document.getElementById("email-compose-alert");
+
+  if (alertEl) {
+    alertEl.className = "hidden";
+    alertEl.innerHTML = "";
+  }
+
+  const tourTitle = (typeof getTourTitle === "function" ? getTourTitle(b.tourId, currentEmailLang) : "") || b.tourTitleLocalized || b.tourTitle || "Tur";
+
+  if (nameEl) nameEl.textContent = b.guestName || "Mehmon";
+  if (idEl) idEl.textContent = b.id || "";
+  if (tourEl) tourEl.textContent = tourTitle;
+  if (phoneEl) phoneEl.textContent = b.guestPhone || "Ko'rsatilmadi";
+  if (dateEl) dateEl.textContent = `${b.startDate || ''} (${b.startTime || '09:00'})`;
+  if (toEl) toEl.value = b.guestEmail || "";
+
+  switchEmailComposeLang(currentEmailLang, false);
+  applyEmailTemplate("contact_fallback");
+
+  if (modal) modal.classList.remove("hidden");
+}
+
+function closeEmailComposeModal() {
+  const modal = document.getElementById("email-compose-modal");
+  if (modal) modal.classList.add("hidden");
+  currentEmailBooking = null;
+}
+
+function switchEmailComposeLang(lang, reapplyTemplate = true) {
+  currentEmailLang = lang;
+  ['uz', 'ru', 'en'].forEach(l => {
+    const btn = document.getElementById(`elang-btn-${l}`);
+    if (btn) {
+      if (l === lang) {
+        btn.className = "px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950";
+      } else {
+        btn.className = "px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700";
+      }
+    }
+  });
+
+  if (reapplyTemplate && currentEmailBooking) {
+    applyEmailTemplate("contact_fallback");
+  }
+}
+
+function applyEmailTemplate(type) {
+  if (!currentEmailBooking) return;
+  const b = currentEmailBooking;
+  const lang = currentEmailLang;
+  const tourTitle = (typeof getTourTitle === "function" ? getTourTitle(b.tourId, lang) : "") || b.tourTitleLocalized || b.tourTitle || "Aureon Travel";
+  const pickup = b.pickupLocation || b.roomNumber || (lang === 'ru' ? 'По согласованию' : lang === 'en' ? 'As agreed' : 'Kelishilgan manzil');
+
+  let subject = "";
+  let body = "";
+
+  if (type === "contact_fallback") {
+    if (lang === "ru") {
+      subject = `Aureon Travel - Не удалось связаться с вами (Тур: ${tourTitle})`;
+      body = `Здравствуйте, Уважаемый(ая) ${b.guestName}!
+
+Мы пытались связаться с вами по телефону (${b.guestPhone}) и через Telegram касательно вашей брони, но, к сожалению, не смогли дозвониться.
+
+Информация о бронировании:
+- Номер брони: ${b.id}
+- Тур: ${tourTitle}
+- Дата отправления: ${b.startDate} (в ${b.startTime || '09:00'})
+- Место встречи: ${pickup}
+
+Пожалуйста, ответьте на это письмо или напишите нам в Telegram / WhatsApp, чтобы подтвердить ваше участие и детали поездки:
+📞 Телефон / WhatsApp: +998 90 123 45 67
+✈️ Telegram: @aureon_travel
+
+С наилучшими пожеланиями,
+Команда Aureon Travel ✈️`;
+    } else if (lang === "en") {
+      subject = `Aureon Travel - Urgent: We could not reach you (Tour: ${tourTitle})`;
+      body = `Dear ${b.guestName},
+
+We attempted to reach you via phone (${b.guestPhone}) and Telegram regarding your upcoming tour reservation, but were unable to connect.
+
+Booking Details:
+- Booking ID: ${b.id}
+- Tour: ${tourTitle}
+- Date: ${b.startDate} (at ${b.startTime || '09:00'})
+- Pickup Location: ${pickup}
+
+Please reply to this email or reach out to us so we can finalize your itinerary and pickup arrangements:
+📞 Phone / WhatsApp: +998 90 123 45 67
+✈️ Telegram: @aureon_travel
+
+Best regards,
+Aureon Travel Concierge Team ✈️`;
+    } else {
+      subject = `Aureon Travel - Siz bilan bog'lana olmadik (Tur: ${tourTitle})`;
+      body = `Assalomu alaykum, Hurmatli ${b.guestName}!
+
+Biz Aureon Travel jamoasidan siz bilan ko'rsatilgan telefon (${b.guestPhone}) va Telegram orqali bog'lanishga harakat qildik, ammo aloqa o'rnatish imkoni bo'lmadi.
+
+Sizning buyurtma tafsilotlaringiz:
+- Buyurtma ID: ${b.id}
+- Tanlangan tur: ${tourTitle}
+- Boshlanish sanasi: ${b.startDate} (soat ${b.startTime || '09:00'})
+- Olib ketish manzili: ${pickup}
+
+Sayohatni to'liq tasdiqlash va transport hamda gid xizmatini muvofiqlashtirish uchun ushbu xatga javob yozishingizni yoki quyidagi aloqa vositalari orqali bizga xabar berishingizni so'raymiz:
+📞 Telefon / WhatsApp: +998 90 123 45 67
+✈️ Telegram: @aureon_travel
+
+Sizga unutilmas sayohat tilaymiz!
+Hurmat bilan, Aureon Travel jamoasi ✈️`;
+    }
+  } else if (type === "confirmed") {
+    if (lang === "ru") {
+      subject = `Aureon Travel - Ваша бронь подтверждена! ✅ (${tourTitle})`;
+      body = `Здравствуйте, Уважаемый(ая) ${b.guestName}!
+
+Ваша заявка на тур "${tourTitle}" (ID: ${b.id}) успешно ПОДТВЕРЖДЕНА! ✅
+
+Детали поездки:
+- Дата отправления: ${b.startDate} (в ${b.startTime || '09:00'})
+- Место встречи: ${pickup}
+- Длительность: ${b.durationDays} дн. (${b.nights || 0} ноч.)
+- Итоговая стоимость: ${formatCurrency(b.totalPrice, "ru")}
+
+Наш представитель и трансфер прибудут вовремя.
+Контакты: +998 90 123 45 67
+
+С уважением, Aureon Travel ✈️`;
+    } else if (lang === "en") {
+      subject = `Aureon Travel - Booking Confirmed! ✅ (${tourTitle})`;
+      body = `Dear ${b.guestName},
+
+We are pleased to inform you that your booking for "${tourTitle}" (ID: ${b.id}) has been CONFIRMED! ✅
+
+Trip Information:
+- Departure: ${b.startDate} at ${b.startTime || '09:00'}
+- Pickup Location: ${pickup}
+- Duration: ${b.durationDays} day(s) (${b.nights || 0} night(s))
+- Total Price: ${formatCurrency(b.totalPrice, "en")}
+
+Our private transfer and guide will be waiting for you at the appointed time.
+Contact: +998 90 123 45 67
+
+Best regards, Aureon Travel ✈️`;
+    } else {
+      subject = `Aureon Travel - Buyurtmangiz tasdiqlandi! ✅ (${tourTitle})`;
+      body = `Assalomu alaykum, Hurmatli ${b.guestName}!
+
+"${tourTitle}" turiga bergan arizangiz (ID: ${b.id}) muvaffaqiyatli TASDIQLANDI! ✅
+
+Sayohat ma'lumotlari:
+- Sana: ${b.startDate} (soat ${b.startTime || '09:00'})
+- Olib ketish joyi: ${pickup}
+- Davomiyligi: ${b.durationDays} kun (${b.nights || 0} kecha)
+- Jami to'lov: ${formatCurrency(b.totalPrice, "uz")}
+
+Qulay transportimiz va mas'ul xodimimiz belgilangan vaqtda sizni kutib oladi.
+Bog'lanish: +998 90 123 45 67
+
+Hurmat bilan, Aureon Travel ✈️`;
+    }
+  } else if (type === "tour_reminder") {
+    if (lang === "ru") {
+      subject = `Aureon Travel - Напоминание и подготовка к поездке 🎒 (${tourTitle})`;
+      body = `Здравствуйте, Уважаемый(ая) ${b.guestName}!
+
+Напоминаем, что ваша поездка в рамках тура "${tourTitle}" состоится уже скоро (${b.startDate} в ${b.startTime || '09:00'}).
+
+Рекомендации перед выездом:
+1. Возьмите с собой паспорт или удостоверение личности.
+2. Одевайтесь по погоде и наденьте удобную обувь для прогулок.
+3. Не забудьте зарядные устройства и солнцезащитные очки.
+
+Место сбора: ${pickup}
+По любым вопросам звоните: +998 90 123 45 67
+
+Aureon Travel ✈️`;
+    } else if (lang === "en") {
+      subject = `Aureon Travel - Tour Reminder & Preparation 🎒 (${tourTitle})`;
+      body = `Dear ${b.guestName},
+
+This is a friendly reminder that your tour "${tourTitle}" is scheduled for ${b.startDate} at ${b.startTime || '09:00'}.
+
+Before Departure Tips:
+1. Please bring your valid passport or ID card.
+2. Wear comfortable walking shoes and weather-appropriate attire.
+3. Bring your camera/smartphone charger and sunglasses.
+
+Meeting location: ${pickup}
+Direct line: +998 90 123 45 67
+
+Aureon Travel ✈️`;
+    } else {
+      subject = `Aureon Travel - Sayohat oldidan eslatma va tavsiyalar 🎒 (${tourTitle})`;
+      body = `Assalomu alaykum, Hurmatli ${b.guestName}!
+
+"${tourTitle}" bo'yicha sayohatingiz ${b.startDate} kuni soat ${b.startTime || '09:00'}da boshlanishini eslatib o'tamiz.
+
+Sayohat uchun foydali maslahatlar:
+1. Shaxsingizni tasdiqlovchi hujjatni (pasport) yoningizda olib oling.
+2. Harakatlanish uchun qulay kiyim va poyabzal kiyish tavsiya etiladi.
+3. Telefon quvvatlagichi va quyoshdan saqlovchi ko'zoynakni unutmang.
+
+Kutib olish manzili: ${pickup}
+Aloqa: +998 90 123 45 67
+
+Aureon Travel ✈️`;
+    }
+  } else if (type === "cancelled") {
+    if (lang === "ru") {
+      subject = `Aureon Travel - Уведомление об отмене бронирования ❌ (${tourTitle})`;
+      body = `Здравствуйте, Уважаемый(ая) ${b.guestName}!
+
+Сообщаем, что ваша заявка на тур "${tourTitle}" (ID: ${b.id}) была отменена.
+
+Если у вас возникли вопросы или вы хотите подобрать другие доступные даты, пожалуйста, свяжитесь с нашим отделом бронирования:
+📞 Телефон: +998 90 123 45 67
+✈️ Telegram: @aureon_travel
+
+С уважением, Aureon Travel ✈️`;
+    } else if (lang === "en") {
+      subject = `Aureon Travel - Tour Booking Cancellation ❌ (${tourTitle})`;
+      body = `Dear ${b.guestName},
+
+We regret to inform you that your reservation for "${tourTitle}" (ID: ${b.id}) has been cancelled.
+
+If you would like to reschedule or explore other tour dates, please feel free to reach out to us:
+📞 Phone: +998 90 123 45 67
+✈️ Telegram: @aureon_travel
+
+Best regards, Aureon Travel ✈️`;
+    } else {
+      subject = `Aureon Travel - Buyurtma bekor qilindi ❌ (${tourTitle})`;
+      body = `Assalomu alaykum, Hurmatli ${b.guestName}!
+
+Afsuski, "${tourTitle}" turiga bergan arizangiz (ID: ${b.id}) bekor qilindi.
+
+Boshqa qulay sanalarga ko'chirish yoki muqobil turlarni tanlash uchun operatorimizga murojaat qilishingiz mumkin:
+📞 Telefon: +998 90 123 45 67
+✈️ Telegram: @aureon_travel
+
+Hurmat bilan, Aureon Travel ✈️`;
+    }
+  } else {
+    subject = `Aureon Travel - ${tourTitle}`;
+    body = `Assalomu alaykum, Hurmatli ${b.guestName}!
+
+`;
+  }
+
+  const subInput = document.getElementById("email-compose-subject");
+  const bodyTextarea = document.getElementById("email-compose-body");
+  if (subInput) subInput.value = subject;
+  if (bodyTextarea) bodyTextarea.value = body;
+
+  updateEmailMailtoLink();
+}
+
+function updateEmailMailtoLink() {
+  const to = document.getElementById("email-compose-to")?.value.trim() || "";
+  const sub = document.getElementById("email-compose-subject")?.value || "";
+  const body = document.getElementById("email-compose-body")?.value || "";
+
+  const link = document.getElementById("btn-email-mailto-launch");
+  if (link) {
+    const encSub = encodeURIComponent(sub);
+    const encBody = encodeURIComponent(body);
+    link.href = to ? `mailto:${to}?subject=${encSub}&body=${encBody}` : `mailto:?subject=${encSub}&body=${encBody}`;
+  }
+}
+
+async function handleSendEmailSubmit() {
+  const to = document.getElementById("email-compose-to")?.value.trim();
+  const subject = document.getElementById("email-compose-subject")?.value.trim();
+  const body = document.getElementById("email-compose-body")?.value.trim();
+  const alertEl = document.getElementById("email-compose-alert");
+  const btn = document.getElementById("btn-email-server-send");
+  const btnText = document.getElementById("btn-email-server-send-text");
+
+  if (!to) {
+    if (alertEl) {
+      alertEl.className = "p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
+      alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation text-rose-600 mr-1.5"></i> Qabul qiluvchi email manzilini kiriting!';
+    }
+    return;
+  }
+
+  if (!subject || !body) {
+    if (alertEl) {
+      alertEl.className = "p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
+      alertEl.innerHTML = '<i class="fa-solid fa-circle-exclamation text-rose-600 mr-1.5"></i> Xat mavzusi va matnini to\'ldiring!';
+    }
+    return;
+  }
+
+  // If booking's email was not set or changed, update booking record
+  if (currentEmailBooking && to !== currentEmailBooking.guestEmail) {
+    currentEmailBooking.guestEmail = to;
+    saveBookings(allBookings);
+    renderBookingsTable();
+  }
+
+  if (btn) btn.disabled = true;
+  if (btnText) btnText.textContent = "Jo'natilmoqda...";
+  if (alertEl) {
+    alertEl.className = "p-3 rounded-xl text-xs font-medium bg-amber-50 text-amber-800 border border-amber-200 block";
+    alertEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1.5"></i> Server orqali email jo\'natilmoqda...';
+  }
+
+  try {
+    const res = await fetch("/api/send-email", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        to: to,
+        subject: subject,
+        message: body,
+        smtpConfig: emailConfig
+      })
+    });
+
+    const data = await res.json();
+    if (res.ok && data.success) {
+      if (alertEl) {
+        alertEl.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
+        alertEl.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Email <strong>${to}</strong> manziliga muvaffaqiyatli jo'natildi!`;
+      }
+      setTimeout(() => {
+        closeEmailComposeModal();
+      }, 2500);
+    } else {
+      if (alertEl) {
+        alertEl.className = "p-3 rounded-xl text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200 block";
+        alertEl.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1.5"></i> <strong>Xatolik:</strong> ${data.error || "Xat yuborishda xatolik yuz berdi. SMTP sozlamalarini tekshiring yoki 'Mail dasturida ochish' tugmasidan foydalaning."}`;
+      }
+    }
+  } catch (err) {
+    if (alertEl) {
+      alertEl.className = "p-3 rounded-xl text-xs font-medium bg-rose-50 text-rose-800 border border-rose-200 block";
+      alertEl.innerHTML = `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1.5"></i> Tarmoq xatosi: ${err.message}. Pochta dasturida ochish orqali ham jo'nata olasiz.`;
+    }
+  } finally {
+    if (btn) btn.disabled = false;
+    if (btnText) btnText.textContent = "Server Orqali Jo'natish";
+  }
 }

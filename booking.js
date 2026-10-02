@@ -15,7 +15,7 @@ let guideOption = "with-guide"; // 'with-guide' | 'without-guide'
 let guideLanguage = "uz";
 let selectedPickupType = "hotel"; // 'hotel' | 'airport' | 'station' | 'custom'
 let selectedStartTime = "09:00";
-const REQUIRED_FIELDS = ["start-date", "start-time", "pickup-location", "guest-name", "guest-phone", "room-number", "guest-note"];
+const REQUIRED_FIELDS = ["start-date", "start-time", "pickup-location", "guest-name", "guest-phone", "guest-email", "room-number", "guest-note"];
 
 document.addEventListener("DOMContentLoaded", async () => {
   // 1. Tanlangan tilni yuklash
@@ -427,6 +427,24 @@ function setQuickNote(valOrKey) {
   updateValidationSummary();
 }
 
+// Tezkor email domenini to'ldirish
+function appendEmailDomain(domain) {
+  const input = document.getElementById("guest-email");
+  if (!input) return;
+  let val = input.value.trim();
+  if (!val) {
+    input.value = "";
+    input.focus();
+    return;
+  }
+  if (val.includes("@")) {
+    val = val.split("@")[0];
+  }
+  input.value = val + domain;
+  validateField('guest-email', true);
+  updateValidationSummary();
+}
+
 // Telefon raqamini avtomatik formatlash (+998 ...)
 function formatPhoneInput(e) {
   let val = e.target.value;
@@ -564,6 +582,16 @@ function validateField(fieldId, showUi = true) {
       const digits = val.replace(/\D/g, '');
       if (!val || digits.length < 9) {
         errorMsg = dict.valErrPhone || "Iltimos, to'liq telefon raqam kiriting (kamida 9 ta raqam)";
+        isValid = false;
+      } else {
+        isValid = true;
+      }
+      break;
+    }
+    case "guest-email": {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+      if (!val || !emailRegex.test(val)) {
+        errorMsg = dict.valErrEmail || "Iltimos, to'g'ri elektron pochta manzilini kiriting (masalan: ismingiz@gmail.com)";
         isValid = false;
       } else {
         isValid = true;
@@ -741,6 +769,9 @@ function applyBookingLanguage(lang) {
   // 3. Form input placeholderlari
   const nameInput = document.getElementById("guest-name");
   if (nameInput && dict.phName) nameInput.placeholder = dict.phName;
+
+  const emailInput = document.getElementById("guest-email");
+  if (emailInput && dict.phEmail) emailInput.placeholder = dict.phEmail;
 
   const roomInput = document.getElementById("room-number");
   if (roomInput && dict.phRoom) roomInput.placeholder = dict.phRoom;
@@ -1370,6 +1401,7 @@ async function handleBookingSubmit(event) {
 
   const guestName = document.getElementById("guest-name")?.value.trim();
   const guestPhone = document.getElementById("guest-phone")?.value.trim();
+  const guestEmail = document.getElementById("guest-email")?.value.trim().toLowerCase() || "";
   const pickupLocation = document.getElementById("pickup-location")?.value.trim() || document.getElementById("room-number")?.value.trim() || "";
   const roomNumber = pickupLocation;
   const startTime = document.getElementById("start-time")?.value || selectedStartTime || "09:00";
@@ -1390,6 +1422,7 @@ async function handleBookingSubmit(event) {
     tourTitleLocalized: getLocalized(calc.tour.title, currentLang),
     guestName: guestName,
     guestPhone: guestPhone,
+    guestEmail: guestEmail,
     roomNumber: roomNumber,
     pickupLocation: pickupLocation,
     pickupType: selectedPickupType,
@@ -1489,6 +1522,7 @@ async function sendTelegramNotification(booking) {
 🌐 *Mijoz tili:* *${langFlags[booking.clientLang] || booking.clientLang}*
 👤 *Mehmon:* *${booking.guestName}*
 📞 *Telefon:* *${booking.guestPhone}*
+📧 *Email:* \`${booking.guestEmail || 'Kiritilmagan'}\`
 ━━━━━━━━━━━━━━━━━━━━
 📍 *Yo'nalish:* *${booking.tourTitleLocalized || booking.tourTitle}*
 📅 *Boshlanish sanasi:* ${booking.startDate}
@@ -1536,6 +1570,7 @@ function showBookingSuccessModal(booking) {
   const lblTime = currentLang === "ru" ? "Время отправления:" : currentLang === "en" ? "Departure Time:" : "Boshlanish vaqti:";
   const lblPickup = currentLang === "ru" ? "Место встречи:" : currentLang === "en" ? "Pickup Point:" : "Olib ketish joyi:";
   const lblPhone = currentLang === "ru" ? "Телефон:" : currentLang === "en" ? "Phone:" : "Telefon:";
+  const lblEmail = currentLang === "ru" ? "Эл. почта:" : currentLang === "en" ? "Email:" : "Email:";
   const lblGuide = currentLang === "ru" ? "Гид:" : currentLang === "en" ? "Guide:" : "Gid xizmati:";
   const lblDate = currentLang === "ru" ? "Дата начала:" : currentLang === "en" ? "Start Date:" : "Sana:";
   const lblTotal = currentLang === "ru" ? "Итого:" : currentLang === "en" ? "Total:" : "Jami hisob:";
@@ -1553,6 +1588,7 @@ function showBookingSuccessModal(booking) {
     <div><strong>${lblTour}</strong> ${booking.tourTitleLocalized || booking.tourTitle}</div>
     <div><strong>${lblGuest}</strong> ${booking.guestName}</div>
     <div><strong>${lblPhone}</strong> ${booking.guestPhone}</div>
+    <div><strong>${lblEmail}</strong> <span class="text-amber-700 font-semibold">${booking.guestEmail || '-'}</span></div>
     <div><strong>${lblDate}</strong> ${booking.startDate} (🕒 <strong>${booking.startTime || '09:00'}</strong>)</div>
     <div><strong>${lblPickup}</strong> ${booking.pickupLocation || booking.roomNumber}</div>
     <div><strong>${lblGuide}</strong> ${guideText}</div>

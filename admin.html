@@ -355,6 +355,136 @@
 
       </div>
 
+      <!-- Email (SMTP) Configuration Section -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 pt-6 border-t border-slate-200">
+        
+        <!-- Form Container -->
+        <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
+          <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-100">
+            <div class="w-12 h-12 rounded-xl bg-amber-500 text-slate-950 flex items-center justify-center text-2xl shadow">
+              <i class="fa-solid fa-envelope"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-bold text-slate-900">Email (SMTP) Xabarnoma Tizimi</h3>
+              <p class="text-xs text-slate-500">Mijozlarga to'g'ridan-to'g'ri email xat jo'natish uchun server sozlamalari</p>
+            </div>
+          </div>
+
+          <form id="email-settings-form" onsubmit="handleSaveEmailConfig(event)" class="space-y-4">
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="smtp-host" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  SMTP Server (Host) *
+                </label>
+                <input type="text" id="smtp-host" placeholder="Masalan: smtp.gmail.com yoki smtp.mail.ru" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+
+              <div>
+                <label for="smtp-port" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  SMTP Port *
+                </label>
+                <input type="number" id="smtp-port" placeholder="465 yoki 587" value="465" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="smtp-user" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Email (Foydalanuvchi) *
+                </label>
+                <input type="email" id="smtp-user" placeholder="Masalan: info@aureontravel.uz" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+
+              <div>
+                <label for="smtp-pass" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Maxsus Parol (App Password) *
+                </label>
+                <input type="password" id="smtp-pass" placeholder="••••••••••••••••" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label for="smtp-sender-name" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Jo'natuvchi Nomi
+                </label>
+                <input type="text" id="smtp-sender-name" value="Aureon Travel" placeholder="Aureon Travel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+
+              <div>
+                <label for="smtp-test-email" class="block text-xs font-bold text-slate-700 uppercase mb-1">
+                  Sinov uchun Email manzili
+                </label>
+                <input type="email" id="smtp-test-email" placeholder="sizning@gmail.com" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:ring-2 focus:ring-amber-500 focus:outline-none">
+              </div>
+            </div>
+
+            <div class="pt-4 border-t border-slate-100 flex flex-wrap items-center gap-3">
+              <button type="submit" class="bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs sm:text-sm px-6 py-2.5 rounded-xl transition-all shadow-sm flex items-center gap-2">
+                <i class="fa-solid fa-floppy-disk"></i>
+                <span>Email Sozlamalarini Saqlash</span>
+              </button>
+
+              <button type="button" onclick="testEmailConnection()" id="btn-test-email" class="bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-xs sm:text-sm px-5 py-2.5 rounded-xl transition-colors flex items-center gap-2">
+                <i class="fa-solid fa-paper-plane text-amber-600"></i>
+                <span>Test Email Yuborish</span>
+              </button>
+
+              <div id="email-autosave-indicator" class="text-xs text-emerald-600 font-bold flex items-center gap-1.5 transition-all opacity-0 ml-auto">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>Avtomatik saqlandi</span>
+              </div>
+            </div>
+
+            <div id="email-test-result" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+
+          </form>
+        </div>
+
+        <!-- Email Guide Card -->
+        <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-6 text-white shadow-sm flex flex-col justify-between">
+          <div>
+            <h4 class="text-sm font-black text-amber-400 uppercase tracking-wider mb-4 flex items-center gap-2">
+              <i class="fa-solid fa-envelope-circle-check"></i>
+              <span>Email Tizimi Imkoniyatlari:</span>
+            </h4>
+
+            <div class="space-y-4 text-xs text-slate-300">
+              <div class="flex gap-3">
+                <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0">1</span>
+                <div>
+                  <strong class="text-white">To'g'ridan-to'g'ri aloqa:</strong>
+                  Mijozning telefoni o'chiq yoki Telegrami bo'lmaganda unga 1 klikda professional xat yuboring.
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0">2</span>
+                <div>
+                  <strong class="text-white">Tayyor shablonlar:</strong>
+                  Tasdiqlash, bekor qilish va bog'lanish so'rovi shablonlari avtomatik mijoz tilida shakllanadi.
+                </div>
+              </div>
+
+              <div class="flex gap-3">
+                <span class="w-6 h-6 rounded-full bg-amber-500 text-slate-950 font-bold flex items-center justify-center shrink-0">3</span>
+                <div>
+                  <strong class="text-white">Har qanday pochta:</strong>
+                  Gmail (App Password orqali), Yandex, Mail.ru yoki kompaniya korporativ pochtasini ulab ishlating.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-6 pt-4 border-t border-slate-700/50 text-[11px] text-slate-400 flex items-center gap-2">
+            <i class="fa-solid fa-lock text-amber-400"></i>
+            <span>SMTP orqali yuboriladigan barcha xatlar shifrlangan va himoyalangan.</span>
+          </div>
+        </div>
+
+      </div>
+
     </section>
 
     <!-- TAB 4: VALYUTA KURSI BOSHQARUVI (CURRENCY) -->
@@ -679,17 +809,20 @@
         <span class="block text-[11px] font-bold uppercase tracking-wider text-amber-900 mb-2">
           1-Klikda mijozga xabar yuborish:
         </span>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <a id="btn-dispatch-telegram" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs shadow-sm transition-all text-center">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <a id="btn-dispatch-telegram" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-brands fa-telegram text-sm"></i> Telegram
           </a>
-          <a id="btn-dispatch-whatsapp" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all text-center">
+          <a id="btn-dispatch-whatsapp" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
           </a>
-          <a id="btn-dispatch-sms" href="#" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center">
+          <a id="btn-dispatch-sms" href="#" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-solid fa-comment-sms text-sm"></i> SMS
           </a>
-          <button type="button" onclick="copyStatusMessageToClipboard()" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all text-center">
+          <a id="btn-dispatch-email" href="#" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-sm transition-all text-center" title="Pochta orqali yuborish">
+            <i class="fa-solid fa-envelope text-sm"></i> Email
+          </a>
+          <button type="button" onclick="copyStatusMessageToClipboard()" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-regular fa-copy text-sm"></i> Nusxalash
           </button>
         </div>
@@ -768,17 +901,20 @@
         <span class="block text-[11px] font-bold uppercase tracking-wider text-amber-900 mb-2">
           1-Klikda mijozga eslatma yuborish:
         </span>
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
-          <a id="btn-weather-telegram" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs shadow-sm transition-all text-center">
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-2">
+          <a id="btn-weather-telegram" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-sky-500 hover:bg-sky-600 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-brands fa-telegram text-sm"></i> Telegram
           </a>
-          <a id="btn-weather-whatsapp" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all text-center">
+          <a id="btn-weather-whatsapp" href="#" target="_blank" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-brands fa-whatsapp text-sm"></i> WhatsApp
           </a>
-          <a id="btn-weather-sms" href="#" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center">
+          <a id="btn-weather-sms" href="#" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-solid fa-comment-sms text-sm"></i> SMS
           </a>
-          <button type="button" onclick="copyWeatherMessageToClipboard()" class="flex items-center justify-center gap-1.5 py-2 px-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all text-center">
+          <a id="btn-weather-email" href="#" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-sm transition-all text-center" title="Pochta orqali yuborish">
+            <i class="fa-solid fa-envelope text-sm"></i> Email
+          </a>
+          <button type="button" onclick="copyWeatherMessageToClipboard()" class="flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs shadow-sm transition-all text-center">
             <i class="fa-regular fa-copy text-sm"></i> Nusxalash
           </button>
         </div>
@@ -789,6 +925,126 @@
         <button type="button" onclick="closeWeatherAlertModal()" class="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs transition-colors">
           Yopish
         </button>
+      </div>
+
+  <!-- MODAL: EMAIL DISPATCH & COMPOSE (MIJOZGA EMAIL XAT YOZISH) -->
+  <div id="email-compose-modal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/80 backdrop-blur-sm p-4 flex items-center justify-center">
+    <div class="bg-white rounded-3xl max-w-2xl w-full max-h-[92vh] overflow-y-auto p-6 sm:p-8 shadow-2xl border border-slate-200 animate-in fade-in duration-200">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+        <div>
+          <h3 class="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2">
+            <span class="w-8 h-8 rounded-full bg-amber-100 text-amber-600 flex items-center justify-center text-sm">
+              <i class="fa-solid fa-envelope-open-text"></i>
+            </span>
+            <span>Mijozga Email Yuborish / Bog'lanish</span>
+          </h3>
+          <p class="text-xs text-slate-500 mt-0.5">SMS yoki Telegram orqali bog'lanish imkoni bo'lmaganda rasmiy xat jo'nating</p>
+        </div>
+        <button onclick="closeEmailComposeModal()" class="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center transition-colors">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Recipient & Tour Info Card -->
+      <div class="p-3.5 rounded-2xl bg-amber-50/70 border border-amber-200 mb-4 text-xs space-y-2">
+        <div class="flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2">
+            <span class="font-bold text-slate-800" id="email-guest-name">Mehmon</span>
+            <span id="email-booking-id" class="px-2 py-0.5 rounded-md bg-amber-200 text-amber-900 font-mono font-bold text-[11px]">#B-000000</span>
+          </div>
+          <div id="email-tour-badge" class="px-2.5 py-0.5 rounded-full bg-white border border-amber-300 text-amber-950 font-semibold text-[11px] truncate max-w-[260px]">
+            Tur
+          </div>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600 pt-1 border-t border-amber-200/60">
+          <div><i class="fa-solid fa-phone text-slate-400 mr-1.5"></i> <span id="email-guest-phone" class="font-medium">+998 ...</span></div>
+          <div><i class="fa-solid fa-calendar text-slate-400 mr-1.5"></i> <span id="email-guest-date" class="font-medium">...</span></div>
+        </div>
+      </div>
+
+      <!-- Form Inputs -->
+      <div class="space-y-3.5 mb-4">
+        <!-- Recipient Email -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+            Qabul qiluvchi Email manzili *
+          </label>
+          <div class="relative">
+            <i class="fa-solid fa-at absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+            <input type="email" id="email-compose-to" placeholder="mehmon@misol.com" class="w-full bg-slate-50 border border-slate-300 rounded-xl pl-9 pr-4 py-2.5 text-xs sm:text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+          </div>
+        </div>
+
+        <!-- Quick Templates Selector -->
+        <div>
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-bold text-slate-700 uppercase flex items-center gap-1.5">
+              <i class="fa-solid fa-wand-magic-sparkles text-amber-500"></i>
+              <span>Tayyor Shablonlar:</span>
+            </label>
+            <div class="flex items-center gap-1">
+              <button type="button" onclick="switchEmailComposeLang('uz')" id="elang-btn-uz" class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500 text-slate-950">UZ</button>
+              <button type="button" onclick="switchEmailComposeLang('ru')" id="elang-btn-ru" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700">RU</button>
+              <button type="button" onclick="switchEmailComposeLang('en')" id="elang-btn-en" class="px-2 py-0.5 rounded-md text-[10px] font-semibold bg-slate-100 text-slate-700">EN</button>
+            </div>
+          </div>
+          <div class="flex flex-wrap gap-1.5">
+            <button type="button" onclick="applyEmailTemplate('contact_fallback')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-100 hover:text-amber-900 border border-slate-200 text-slate-700 text-[11px] font-medium transition-colors">
+              📞 Bog'lanish (SMS/TG o'tmaganda)
+            </button>
+            <button type="button" onclick="applyEmailTemplate('confirmed')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-100 hover:text-emerald-900 border border-slate-200 text-slate-700 text-[11px] font-medium transition-colors">
+              ✅ Bron tasdiqlandi
+            </button>
+            <button type="button" onclick="applyEmailTemplate('tour_reminder')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-sky-100 hover:text-sky-900 border border-slate-200 text-slate-700 text-[11px] font-medium transition-colors">
+              ⏰ Tur eslatmasi & tayyorgarlik
+            </button>
+            <button type="button" onclick="applyEmailTemplate('cancelled')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-rose-100 hover:text-rose-900 border border-slate-200 text-slate-700 text-[11px] font-medium transition-colors">
+              ❌ Bron bekor qilindi
+            </button>
+            <button type="button" onclick="applyEmailTemplate('custom')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-slate-200 border border-slate-200 text-slate-700 text-[11px] font-medium transition-colors">
+              ✍️ Toza forma
+            </button>
+          </div>
+        </div>
+
+        <!-- Subject -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+            Xat Mavzusi (Subject) *
+          </label>
+          <input type="text" id="email-compose-subject" placeholder="Aureon Travel - ..." class="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-2.5 text-xs sm:text-sm font-semibold focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none">
+        </div>
+
+        <!-- Message Body -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase mb-1">
+            Xat Matni (Message Body) *
+          </label>
+          <textarea id="email-compose-body" rows="9" placeholder="Xat matnini bu yerga yozing..." class="w-full bg-slate-50 border border-slate-300 rounded-2xl p-3.5 text-xs sm:text-sm text-slate-800 leading-relaxed font-sans focus:ring-2 focus:ring-amber-500 focus:bg-white focus:outline-none"></textarea>
+        </div>
+
+        <!-- Dispatch result notification banner -->
+        <div id="email-compose-alert" class="hidden p-3 rounded-xl text-xs font-medium"></div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-100">
+        <a id="btn-email-mailto-launch" href="#" target="_blank" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs flex items-center gap-2 transition-colors" title="Kompyuter yoki telefondagi standart pochta dasturida ochish">
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+          <span>Mail Dasturida Ochish</span>
+        </a>
+
+        <div class="flex items-center gap-2 ml-auto">
+          <button type="button" onclick="closeEmailComposeModal()" class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors">
+            Bekor qilish
+          </button>
+          <button type="button" id="btn-email-server-send" onclick="handleSendEmailSubmit()" class="px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-amber-500/20 transition-all">
+            <i class="fa-solid fa-paper-plane"></i>
+            <span id="btn-email-server-send-text">Server Orqali Jo'natish</span>
+          </button>
+        </div>
       </div>
 
     </div>

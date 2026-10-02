@@ -371,6 +371,91 @@ function sendTelegramMessage(botToken, chatId, text) {
   });
 }
 
+// --- 4.1 EMAIL (SMTP) XABARLARI ---
+async function sendEmailMessage({ to, subject, message, html, smtpConfig }) {
+  const settings = await getSettingsFromDb();
+  const dbEmailCfg = (settings && settings.email) ? settings.email : {};
+  const emailCfg = (smtpConfig && smtpConfig.host) ? smtpConfig : dbEmailCfg;
+
+  const host = emailCfg.host || emailCfg.smtpHost || process.env.SMTP_HOST;
+  const port = parseInt(emailCfg.port || emailCfg.smtpPort || process.env.SMTP_PORT || "587", 10);
+  const user = emailCfg.user || emailCfg.smtpUser || process.env.SMTP_USER;
+  const pass = emailCfg.pass || emailCfg.smtpPass || process.env.SMTP_PASS;
+  const senderName = emailCfg.senderName || process.env.SMTP_SENDER_NAME || "Aureon Travel";
+  const fromEmail = emailCfg.fromEmail || emailCfg.user || emailCfg.smtpUser || process.env.SMTP_FROM || user;
+  const isEnabled = emailCfg.enabled !== false;
+
+  const mailtoUrl = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
+
+  if (!isEnabled || !host || !user || !pass) {
+    return {
+      success: false,
+      smtpConfigured: false,
+      error: "SMTP server sozlanmagan. Xatni pochta dasturi (Gmail/Outlook) orqali yuborishingiz mumkin.",
+      mailtoUrl: mailtoUrl
+    };
+  }
+
+  let nodemailer;
+  try {
+    nodemailer = require('nodemailer');
+  } catch (e) {
+    return {
+      success: false,
+      smtpConfigured: false,
+      error: "Nodemailer moduli o'rnatilmagan.",
+      mailtoUrl: mailtoUrl
+    };
+  }
+
+  try {
+    const transporter = nodemailer.createTransport({
+      host: host,
+      port: port,
+      secure: port === 465,
+      auth: {
+        user: user,
+        pass: pass
+      },
+      tls: {
+        rejectUnauthorized: false
+      }
+    });
+
+    const formattedHtml = html || `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; background: #ffffff;">
+        <div style="background: #0f172a; padding: 24px; text-align: center; color: white;">
+          <h1 style="color: #f59e0b; margin: 0; font-size: 22px;">✈️ AUREON TRAVEL</h1>
+          <p style="color: #94a3b8; margin: 4px 0 0; font-size: 13px;">O'zbekiston Bo'ylab Eksklyuziv Sayohatlar</p>
+        </div>
+        <div style="padding: 28px 24px; color: #1e293b; font-size: 14px; line-height: 1.6;">
+          ${message.replace(/\n/g, '<br>')}
+        </div>
+        <div style="background: #f8fafc; padding: 16px 24px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
+          © 2026 Aureon Travel. Telefon: +998 90 123 45 67 | <a href="https://aureon-travel.onrender.com" style="color: #d97706;">aureon-travel.onrender.com</a>
+        </div>
+      </div>
+    `;
+
+    await transporter.sendMail({
+      from: `"${senderName}" <${fromEmail}>`,
+      to: to,
+      subject: subject,
+      text: message,
+      html: formattedHtml
+    });
+
+    return { success: true, message: "Email xabari muvaffaqiyatli jo'natildi!" };
+  } catch (err) {
+    return {
+      success: false,
+      smtpConfigured: true,
+      error: err.message,
+      mailtoUrl: mailtoUrl
+    };
+  }
+}
+
 // --- 5. EXPRESS ILOVASI VA REST API ROUTELAR ---
 let app;
 try {
@@ -450,7 +535,8 @@ try {
     const results = all.filter(b => {
       const matchId = b.id && b.id.toLowerCase() === q;
       const matchPhone = cleanQ.length >= 7 && b.guestPhone && b.guestPhone.replace(/\D/g, '').includes(cleanQ);
-      return matchId || matchPhone;
+      const matchEmail = (b.guestEmail && b.guestEmail.toLowerCase() === q) || (b.email && b.email.toLowerCase() === q);
+      return matchId || matchPhone || matchEmail;
     }).map(b => ({
       id: b.id,
       tourId: b.tourId,
@@ -461,6 +547,7 @@ try {
       status: b.status,
       totalPrice: b.totalPrice,
       guestName: b.guestName,
+      guestEmail: b.guestEmail || b.email,
       createdAt: b.createdAt
     }));
 
@@ -496,6 +583,7 @@ try {
 📋 <b>ID:</b> #${newBooking.id}
 👤 <b>Mijoz:</b> ${newBooking.guestName}
 📞 <b>Telefon:</b> ${newBooking.guestPhone}
+📧 <b>Email:</b> ${newBooking.guestEmail || newBooking.email || '-'}
 📍 <b>Manzil:</b> ${newBooking.pickupLocation || newBooking.roomNumber || '-'}
 
 🗺 <b>Tur:</b> ${newBooking.tourTitleLocalized || newBooking.tourTitle || '-'}
@@ -536,6 +624,7 @@ try {
 📋 <b>ID:</b> #${booking.id}
 👤 <b>Mijoz:</b> ${booking.guestName}
 📞 <b>Tel:</b> ${booking.guestPhone}
+📧 <b>Email:</b> ${booking.guestEmail || booking.email || '-'}
 🗺 <b>Tur:</b> ${booking.tourTitleLocalized || booking.tourTitle}
 📅 <b>Sana:</b> ${booking.startDate} (${booking.startTime || '09:00'})
 📍 <b>Olib ketish:</b> ${booking.pickupLocation || booking.roomNumber || '-'}
@@ -589,6 +678,60 @@ try {
       res.json({ success: true, message: "Xabar muvaffaqiyatli yetkazildi!" });
     } else {
       res.status(400).json({ success: false, error: result.error });
+    }
+  });
+
+  // Mijozga Email yuborish (Admin POST)
+  app.post('/api/send-email', async (req, res) => {
+    const { to, subject, message, bookingId, smtpConfig } = req.body;
+    if (!to || !subject || !message) {
+      return res.status(400).json({ error: "Qabul qiluvchi email, mavzu va xat matni kiritilishi shart" });
+    }
+
+    try {
+      const result = await sendEmailMessage({ to, subject, message, smtpConfig });
+      if (result.success) {
+        res.json({ success: true, message: "Email xati muvaffaqiyatli jo'natildi!" });
+      } else {
+        res.json({
+          success: false,
+          smtpConfigured: result.smtpConfigured,
+          error: result.error,
+          mailtoUrl: result.mailtoUrl
+        });
+      }
+    } catch (err) {
+      console.error("Email yuborishda xatolik:", err.message);
+      res.status(500).json({
+        success: false,
+        error: err.message,
+        mailtoUrl: `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`
+      });
+    }
+  });
+
+  // Email (SMTP) ulanishini test qilish
+  app.post('/api/email/test', async (req, res) => {
+    const { testEmail, smtpConfig } = req.body;
+    if (!testEmail) {
+      return res.status(400).json({ error: "Test uchun email manzili kiritilmadi" });
+    }
+
+    try {
+      const result = await sendEmailMessage({
+        to: testEmail,
+        subject: "✈️ Aureon Travel - Test Email Xabari",
+        message: `Salom! Bu Aureon Travel tizimidan test xabari.\n\nSizning SMTP serveringiz muvaffaqiyatli ulandi va faol holatda! ✅\nVaqti: ${new Date().toLocaleString()}`,
+        smtpConfig: smtpConfig
+      });
+
+      if (result.success) {
+        res.json({ success: true, message: `Test xati ${testEmail} manziliga yetkazildi!` });
+      } else {
+        res.status(400).json({ success: false, error: result.error || "SMTP server ulanmadi" });
+      }
+    } catch (err) {
+      res.status(400).json({ success: false, error: err.message });
     }
   });
 
