@@ -235,7 +235,23 @@ async function initDatabase() {
           data JSONB NOT NULL,
           updated_at TIMESTAMPTZ DEFAULT NOW()
         );
+        ALTER TABLE tours ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT NOW();
       `);
+
+      // Turlar jadvali bo'sh bo'lsa, db.json dagi turlarni ko'chirish (tartibi saqlanadi).
+      // Aks holda admin bitta turni saqlaganda qolgan turlar saytdan yo'qolib qolardi.
+      const toursCount = await client.query('SELECT COUNT(*) FROM tours');
+      if (parseInt(toursCount.rows[0].count) === 0) {
+        const localTours = readDb().tours || [];
+        const base = Date.now();
+        for (let i = 0; i < localTours.length; i++) {
+          await client.query(
+            'INSERT INTO tours (id, data, created_at, updated_at) VALUES ($1, $2, $3, $3) ON CONFLICT (id) DO NOTHING',
+            [localTours[i].id, JSON.stringify(localTours[i]), new Date(base + i).toISOString()]
+          );
+        }
+        if (localTours.length) console.log(`✅ ${localTours.length} ta tur PostgreSQL ga ko'chirildi`);
+      }
 
       // Agar PostgreSQL da buyurtmalar hali bo'lmasa, lokal db.json dan ko'chirib o'tkazish (Auto-migration)
       const resCount = await client.query('SELECT COUNT(*) FROM bookings');
@@ -399,7 +415,7 @@ async function getToursFromDb() {
   const pool = getPgPool();
   if (isPgConnected && pool) {
     try {
-      const res = await pool.query('SELECT data FROM tours');
+      const res = await pool.query('SELECT data FROM tours ORDER BY created_at ASC, id ASC');
       if (res.rows.length > 0) {
         return res.rows.map(r => r.data);
       }
@@ -430,6 +446,105 @@ async function saveTourToDb(tour) {
   else db.tours.push(tour);
   writeDb(db);
   return tour;
+}
+
+// Barcha turlarni bitta ro'yxat bilan almashtirish (admin: "standart holatga qaytarish")
+async function replaceAllToursInDb(tours) {
+  const pool = getPgPool();
+  if (isPgConnected && pool) {
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query('DELETE FROM tours');
+      const base = Date.now();
+      for (let i = 0; i < tours.length; i++) {
+        await client.query(
+          'INSERT INTO tours (id, data, created_at, updated_at) VALUES ($1, $2, $3, $3)',
+          [tours[i].id, JSON.stringify(tours[i]), new Date(base + i).toISOString()]
+        );
+      }
+      await client.query('COMMIT');
+    } catch (e) {
+      await client.query('ROLLBACK').catch(() => {});
+      console.error("PG turlarni almashtirishda xatolik:", e.message);
+    } finally {
+      client.release();
+    }
+  }
+
+  const db = readDb();
+  db.tours = tours;
+  writeDb(db);
+  return tours;
+}
+
+// --- 3.1 TUR MA'LUMOTLARINI TEKSHIRISH VA NARX HISOBLASH ---
+const PRICE_FIELDS = ['basePricePerPerson', 'hotelPricePerNight', 'guidePricePerDay'];
+const MIN_DAYS = 1, MAX_DAYS = 4;      // booking.html da 1–4 kunlik tugmalar
+const MAX_ADULTS = 30, MAX_CHILDREN = 20; // booking.js dagi cheklovlar bilan bir xil
+
+function validateTour(tour) {
+  if (!tour || typeof tour !== 'object' || Array.isArray(tour)) return "Tur ma'lumotlari to'liq emas";
+  if (typeof tour.id !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(tour.id)) return "Tur ID noto'g'ri";
+  for (const field of PRICE_FIELDS) {
+    if (tour[field] === undefined) continue;
+    const n = Number(tour[field]);
+    if (!Number.isFinite(n) || n < 0 || n > 1e10) return `Narx noto'g'ri: ${field}`;
+    tour[field] = Math.round(n);
+  }
+  return null;
+}
+
+function toInt(value) {
+  const n = Number(value);
+  return Number.isInteger(n) ? n : NaN;
+}
+
+// booking.js dagi calculateBookingPrice() bilan aynan bir xil formula.
+// Ikkalasini birga o'zgartiring, aks holda mijoz ko'rgan narx bilan saqlangan narx farq qiladi.
+function calculateTourPrice(tour, { durationDays, adults, children, withHotel, withGuide }) {
+  const nights = Math.max(0, durationDays - 1);
+
+  let dayFactor = 1;
+  if (durationDays === 2) dayFactor = 1.85;
+  if (durationDays === 3) dayFactor = 2.65;
+  if (durationDays === 4) dayFactor = 3.4;
+
+  const basePricePerPerson = tour.basePricePerPerson || 350000;
+  const personBase = (adults * basePricePerPerson) + (children * basePricePerPerson * 0.5);
+  const baseTotal = Math.round(personBase * dayFactor);
+
+  const hotelPricePerNight = tour.hotelPricePerNight || 450000;
+  const roomsCount = Math.ceil((adults + children) / 2);
+  const hotelTotal = (withHotel && nights > 0) ? (hotelPricePerNight * nights * roomsCount) : 0;
+
+  const guidePricePerDay = tour.guidePricePerDay || 200000;
+  const guideTotal = withGuide ? (guidePricePerDay * durationDays) : 0;
+
+  return { nights, totalPrice: baseTotal + hotelTotal + guideTotal };
+}
+
+// Buyurtmadagi tur va parametrlarni tekshirib, narxni serverda qayta hisoblaydi.
+// Xato bo'lsa { error } qaytaradi.
+async function priceBooking(data) {
+  const tours = await getToursFromDb();
+  const tour = tours.find(t => t.id === data.tourId);
+  if (!tour) return { error: "Tanlangan tur topilmadi" };
+
+  const durationDays = toInt(data.durationDays);
+  const adults = toInt(data.adults);
+  const children = data.children === undefined ? 0 : toInt(data.children);
+
+  if (!(durationDays >= MIN_DAYS && durationDays <= MAX_DAYS)) return { error: "Davomiylik noto'g'ri" };
+  if (!(adults >= 1 && adults <= MAX_ADULTS)) return { error: "Kattalar soni noto'g'ri" };
+  if (!(children >= 0 && children <= MAX_CHILDREN)) return { error: "Bolalar soni noto'g'ri" };
+
+  const withHotel = data.hotelOption === "Otel bilan";
+  const withGuide = data.guideOption === "Gid bilan";
+  const { nights, totalPrice } = calculateTourPrice(tour, { durationDays, adults, children, withHotel, withGuide });
+
+  const title = tour.title && typeof tour.title === 'object' ? (tour.title.uz || '') : (tour.title || '');
+  return { tour, durationDays, adults, children, nights, totalPrice, tourTitle: title };
 }
 
 async function deleteTourFromDb(id) {
@@ -629,11 +744,27 @@ try {
 
   app.post('/api/tours', requireAdmin, async (req, res) => {
     const tourData = req.body;
-    if (!tourData || !tourData.id) {
-      return res.status(400).json({ error: "Tur ma'lumotlari to'liq emas" });
-    }
+    const err = validateTour(tourData);
+    if (err) return res.status(400).json({ error: err });
     const saved = await saveTourToDb(tourData);
     res.json({ success: true, tour: saved });
+  });
+
+  // Barcha turlarni almashtirish (admin: standart holatga qaytarish)
+  app.put('/api/tours', requireAdmin, async (req, res) => {
+    const list = req.body;
+    if (!Array.isArray(list) || list.length === 0) {
+      return res.status(400).json({ error: "Turlar ro'yxati bo'sh" });
+    }
+    const ids = new Set();
+    for (const t of list) {
+      const err = validateTour(t);
+      if (err) return res.status(400).json({ error: err });
+      if (ids.has(t.id)) return res.status(400).json({ error: `Takroriy tur ID: ${t.id}` });
+      ids.add(t.id);
+    }
+    const saved = await replaceAllToursInDb(list);
+    res.json({ success: true, tours: saved });
   });
 
   app.delete('/api/tours/:id', requireAdmin, async (req, res) => {
@@ -697,11 +828,24 @@ try {
       return res.status(400).json({ error: "Ism va telefon raqami talab qilinadi" });
     }
 
+    // Narx, tur nomi va sonlarni serverdagi tur narxlari bo'yicha qayta hisoblaymiz:
+    // brauzerdan kelgan totalPrice ga ishonilmaydi.
+    const priced = await priceBooking(data);
+    if (priced.error) {
+      return res.status(400).json({ error: priced.error });
+    }
+
     // ID, holat va vaqtni faqat server belgilaydi: mijoz mavjud buyurtmani ustidan yoza olmasin
     // yoki o'z buyurtmasini "Tasdiqlandi" qilib yubora olmasin.
     const bookingId = generateBookingId(await getAllBookings());
     const newBooking = {
       ...data,
+      tourTitle: priced.tourTitle || data.tourTitle,
+      durationDays: priced.durationDays,
+      nights: priced.nights,
+      adults: priced.adults,
+      children: priced.children,
+      totalPrice: priced.totalPrice,
       id: bookingId,
       status: "Yangi",
       createdAt: new Date().toISOString()

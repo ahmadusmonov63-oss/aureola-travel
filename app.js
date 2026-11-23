@@ -11,7 +11,7 @@ let currentLang = "uz";
 document.addEventListener("DOMContentLoaded", async () => {
   currentLang = getSelectedLanguage();
   await syncExchangeRateFromBackend();
-  activeTours = getStoredTours();
+  activeTours = await loadTours();
   
   applyLanguage(currentLang);
   renderToursGrid(activeTours);

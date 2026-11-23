@@ -25,8 +25,8 @@ document.addEventListener("DOMContentLoaded", async () => {
   // Dollar kursini backend serverdan sinxronlash
   await syncExchangeRateFromBackend();
 
-  // 2. Turlarni yuklash
-  activeTours = getStoredTours();
+  // 2. Turlarni yuklash (avval serverdan, bo'lmasa lokal)
+  activeTours = await loadTours();
 
   // 3. URL'dan tour parametrini tekshirish (?tour=samarqand)
   const urlParams = new URLSearchParams(window.location.search);
@@ -1456,7 +1456,20 @@ async function handleBookingSubmit(event) {
         if (json.booking && json.booking.id) {
           newBooking.id = json.booking.id;
         }
+        // Server narxni o'zi hisoblaydi — mijozga aynan saqlangan narx ko'rsatiladi
+        if (json.booking && typeof json.booking.totalPrice === "number") {
+          newBooking.totalPrice = json.booking.totalPrice;
+        }
         sentToBackend = true;
+      } else if (resp.status === 400) {
+        // Server buyurtmani rad etdi (masalan, tur o'chirilgan) — "qabul qilindi" deb ko'rsatmaymiz
+        const errJson = await resp.json().catch(() => ({}));
+        alert(errJson.error || "Buyurtma ma'lumotlarida xatolik. Sahifani yangilab, qaytadan urinib ko'ring.");
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane text-lg"></i> <span data-i18n="btnSubmit">${UI_STRINGS[currentLang]?.btnSubmit || "Turni Bron Qilish"}</span>`;
+        }
+        return;
       }
     }
   } catch (apiErr) {

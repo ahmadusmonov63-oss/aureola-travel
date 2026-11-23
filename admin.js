@@ -937,7 +937,33 @@ function openNewTourModal() {
   document.getElementById("tour-edit-modal").classList.remove("hidden");
 }
 
-function handleSaveTourEdit(e) {
+// Ko'p tilli maydon ({uz, ru, en}) ning faqat o'zbekcha qismini yangilaydi, ru/en tarjimalarni saqlab qoladi
+function setUzValue(existing, uzValue) {
+  if (existing && typeof existing === "object" && !Array.isArray(existing)) {
+    return { ...existing, uz: uzValue };
+  }
+  return uzValue;
+}
+
+// Turlarni serverga yuborish. Server bo'lmasa (fayl sifatida ochilgan) — true, faqat lokal saqlanadi.
+async function pushToursToBackend(method, path, body) {
+  const api = getApiUrl(path);
+  if (!api) return { ok: true, offline: true };
+  try {
+    const res = await fetch(api, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body)
+    });
+    if (res.ok) return { ok: true };
+    const data = await res.json().catch(() => ({}));
+    return { ok: false, error: data.error || `Server xatosi (${res.status})` };
+  } catch (err) {
+    return { ok: false, error: "Serverga ulanib bo'lmadi: " + err.message };
+  }
+}
+
+async function handleSaveTourEdit(e) {
   e.preventDefault();
 
   const id = document.getElementById("edit-tour-id").value;
@@ -954,22 +980,29 @@ function handleSaveTourEdit(e) {
 
   let existingIndex = allTours.findIndex(t => t.id === id);
 
+  if (![basePrice, hotelPrice, guidePrice].every(n => Number.isFinite(n) && n >= 0)) {
+    alert("Narxlar musbat son bo'lishi kerak.");
+    return;
+  }
+
+  let updatedTour;
   if (existingIndex >= 0) {
-    allTours[existingIndex] = {
-      ...allTours[existingIndex],
-      title,
-      subtitle,
-      location,
-      badge,
+    const prev = allTours[existingIndex];
+    updatedTour = {
+      ...prev,
+      title: setUzValue(prev.title, title),
+      subtitle: setUzValue(prev.subtitle, subtitle),
+      location: setUzValue(prev.location, location),
+      badge: setUzValue(prev.badge, badge),
       basePricePerPerson: basePrice,
       hotelPricePerNight: hotelPrice,
       guidePricePerDay: guidePrice,
       mainImage,
       gallery: gallery.length > 0 ? gallery : [mainImage],
-      activities: activities.length > 0 ? activities : allTours[existingIndex].activities
+      activities: activities.length > 0 ? setUzValue(prev.activities, activities) : prev.activities
     };
   } else {
-    allTours.push({
+    updatedTour = {
       id,
       title,
       subtitle,
@@ -985,21 +1018,39 @@ function handleSaveTourEdit(e) {
       highlights: ["Maxsus individual marshrut", "Komfort shaxsiy transport"],
       sights: ["Tarixiy va me'moriy diqqatga sazovor joylar"],
       included: ["Shaxsiy transport", "Kirish chiptalari"]
-    });
+    };
   }
+
+  // Avval serverga saqlaymiz — aks holda o'zgarish faqat shu brauzerda qolib, mijozlarga ko'rinmaydi
+  const result = await pushToursToBackend("POST", "/api/tours", updatedTour);
+  if (!result.ok) {
+    alert("❌ Tur saqlanmadi: " + result.error);
+    return;
+  }
+
+  if (existingIndex >= 0) allTours[existingIndex] = updatedTour;
+  else allTours.push(updatedTour);
 
   saveTours(allTours);
   closeTourEditModal();
   renderAdminTours();
-  alert("Aureon Travel: Tur muvaffaqiyatli saqlandi!");
+  updateStats();
+  alert(result.offline
+    ? "Tur faqat shu brauzerda saqlandi (server ulanmagan)."
+    : "Aureon Travel: Tur saqlandi va saytda hamma uchun yangilandi!");
 }
 
 function closeTourEditModal() {
   document.getElementById("tour-edit-modal")?.classList.add("hidden");
 }
 
-function resetToursToDefault() {
-  if (confirm("Haqiqatan ham barcha turlarni Aureon Travel standart holatiga va yangi haqiqiy fotosuratlarga qaytarmoqchimisiz?")) {
+async function resetToursToDefault() {
+  if (confirm("Haqiqatan ham barcha turlarni Aureon Travel standart holatiga va yangi haqiqiy fotosuratlarga qaytarmoqchimisiz?\n\nDiqqat: qo'shilgan yangi turlar va o'zgartirilgan narxlar saytdan ham o'chiriladi.")) {
+    const result = await pushToursToBackend("PUT", "/api/tours", DEFAULT_TOURS);
+    if (!result.ok) {
+      alert("❌ Turlar tiklanmadi: " + result.error);
+      return;
+    }
     localStorage.removeItem(STORAGE_KEYS.TOURS);
     localStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION);
     allTours = DEFAULT_TOURS;

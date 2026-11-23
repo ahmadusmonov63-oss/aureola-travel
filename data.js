@@ -1397,6 +1397,28 @@ function saveTours(tours) {
   }
 }
 
+// Turlarni serverdan olish (admin panelda o'zgartirilgan narx va rasmlar hammaga ko'rinishi uchun).
+// Server bo'lmasa yoki javob bermasa, lokal kesh / DEFAULT_TOURS ishlatiladi.
+async function loadTours() {
+  const toursApi = typeof getApiUrl === "function" ? getApiUrl('/api/tours') : null;
+  if (toursApi) {
+    try {
+      const res = await fetch(toursApi, { cache: "no-store" });
+      if (res.ok) {
+        const remote = await res.json();
+        if (Array.isArray(remote) && remote.length > 0) {
+          saveTours(remote);
+          try { localStorage.setItem(STORAGE_KEYS.VERSION, DATA_VERSION); } catch (e) {}
+          return remote;
+        }
+      }
+    } catch (e) {
+      console.warn("Turlarni serverdan olib bo'lmadi, lokal ma'lumot ishlatilmoqda:", e);
+    }
+  }
+  return getStoredTours();
+}
+
 function getStoredBookings() {
   try {
     const data = localStorage.getItem(STORAGE_KEYS.BOOKINGS);
