@@ -1461,10 +1461,12 @@ async function handleBookingSubmit(event) {
           newBooking.totalPrice = json.booking.totalPrice;
         }
         sentToBackend = true;
-      } else if (resp.status === 400) {
-        // Server buyurtmani rad etdi (masalan, tur o'chirilgan) — "qabul qilindi" deb ko'rsatmaymiz
+      } else {
+        // Server javob berdi, lekin buyurtmani qabul qilmadi (400 xato ma'lumot, 429 juda ko'p so'rov,
+        // 500 baza xatosi) — "qabul qilindi" deb ko'rsatmaymiz, aks holda buyurtma jimgina yo'qoladi.
+        // Faqat server umuman javob bermasa (tarmoq xatosi) pastdagi lokal zaxiraga o'tiladi.
         const errJson = await resp.json().catch(() => ({}));
-        alert(errJson.error || "Buyurtma ma'lumotlarida xatolik. Sahifani yangilab, qaytadan urinib ko'ring.");
+        alert(errJson.error || "Buyurtmani yuborishda xatolik yuz berdi. Birozdan keyin qayta urinib ko'ring.");
         if (submitBtn) {
           submitBtn.disabled = false;
           submitBtn.innerHTML = `<i class="fa-solid fa-paper-plane text-lg"></i> <span data-i18n="btnSubmit">${UI_STRINGS[currentLang]?.btnSubmit || "Turni Bron Qilish"}</span>`;
@@ -1712,7 +1714,7 @@ async function searchGuestBooking() {
       <div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500">
         <i class="fa-solid fa-circle-question text-3xl mb-2 text-slate-400"></i>
         <p class="text-xs font-bold text-slate-700">${dict.bookingNotFound || "Bunday buyurtma topilmadi"}</p>
-        <p class="text-[11px] text-slate-400 mt-1">ID (masalan: BK-123456) yoki to'liq telefon raqamni qayta tekshiring.</p>
+        <p class="text-[11px] text-slate-400 mt-1">ID (masalan: BK-7KQ2M9XA) yoki to'liq telefon raqamni qayta tekshiring.</p>
       </div>
     `;
     return;

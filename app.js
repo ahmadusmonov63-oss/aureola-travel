@@ -742,7 +742,7 @@ async function searchGuestBooking() {
       <div class="text-center p-6 bg-slate-50 rounded-2xl border border-slate-200 text-slate-500">
         <i class="fa-solid fa-circle-question text-3xl mb-2 text-slate-400"></i>
         <p class="text-xs font-bold text-slate-700">${dict.bookingNotFound || "Bunday buyurtma topilmadi"}</p>
-        <p class="text-[11px] text-slate-400 mt-1">ID (masalan: BK-123456) yoki to'liq telefon raqamni qayta tekshiring.</p>
+        <p class="text-[11px] text-slate-400 mt-1">ID (masalan: BK-7KQ2M9XA) yoki to'liq telefon raqamni qayta tekshiring.</p>
       </div>
     `;
     return;

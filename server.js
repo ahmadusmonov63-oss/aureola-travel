@@ -10,7 +10,8 @@ const https = require('https');
 const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
-const DB_FILE = path.join(__dirname, 'data', 'db.json');
+const SEED_FILE = path.join(__dirname, 'data', 'db.json');
+const DB_FILE = path.join(__dirname, 'data', 'db.local.json');
 
 // --- 0. XAVFSIZLIK YORDAMCHILARI ---
 const DEFAULT_ADMIN_PASSWORD = "admin";
@@ -131,28 +132,90 @@ function sanitizePublicBooking(data) {
   return clean;
 }
 
+// Buyurtma ID: BK- + 8 ta belgi (chalkashtiriladigan 0/O, 1/I belgilarsiz) — ~10^12 variant.
+// Avvalgi 6 xonali raqamli ID (~900 ming variant) ketma-ket sinab topilishi mumkin edi.
+// Eski BK-123456 ko'rinishidagi ID lar ham ishlashda davom etadi.
+const BOOKING_ID_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 function generateBookingId(existing) {
   const ids = new Set(existing.map(b => b.id));
   let id;
   do {
-    id = `BK-${crypto.randomInt(100000, 1000000)}`;
+    let suffix = '';
+    for (let i = 0; i < 8; i++) suffix += BOOKING_ID_ALPHABET[crypto.randomInt(BOOKING_ID_ALPHABET.length)];
+    id = `BK-${suffix}`;
   } while (ids.has(id));
   return id;
 }
 
+// Ommaviy javoblarda ismni qisqartirish: "Ali Valiyev" -> "Ali V."
+function maskName(name) {
+  const parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) return '';
+  if (parts.length === 1) return parts[0];
+  return `${parts[0]} ${parts[1].charAt(0).toUpperCase()}.`;
+}
+
+// Oddiy IP bo'yicha so'rov cheklovchi (bitta server jarayoni uchun, xotirada)
+function createRateLimiter({ windowMs, max, message }) {
+  const hits = new Map();
+  return function rateLimit(req, res, next) {
+    const now = Date.now();
+    if (hits.size > 5000) {
+      for (const [key, entry] of hits) if (now - entry.start > windowMs) hits.delete(key);
+    }
+    const ip = getClientIp(req);
+    let entry = hits.get(ip);
+    if (!entry || now - entry.start > windowMs) {
+      entry = { start: now, count: 0 };
+      hits.set(ip, entry);
+    }
+    entry.count += 1;
+    if (entry.count > max) {
+      res.set('Retry-After', String(Math.ceil((entry.start + windowMs - now) / 1000)));
+      return res.status(429).json({ error: message });
+    }
+    next();
+  };
+}
+
+// Buyurtmani tekshirish: 10 daqiqada IP boshiga 30 ta so'rov (ID larni ketma-ket sinashni to'xtatadi)
+const lookupLimiter = createRateLimiter({
+  windowMs: 10 * 60 * 1000,
+  max: 30,
+  message: "Juda ko'p so'rov. Birozdan keyin qayta urinib ko'ring."
+});
+
+// Yangi buyurtma: soatiga IP boshiga 10 ta (bazani va Telegram'ni spam bilan to'ldirmaslik uchun)
+const bookingLimiter = createRateLimiter({
+  windowMs: 60 * 60 * 1000,
+  max: 10,
+  message: "Juda ko'p buyurtma yuborildi. Iltimos, keyinroq urinib ko'ring yoki biz bilan telefon orqali bog'laning."
+});
+
 // --- 1. LOKAL MA'LUMOTLAR BAZASI (Fallback zaxira) ---
+// data/db.json      — boshlang'ich ma'lumot (turlar, standart sozlamalar), git'da saqlanadi, server unga YOZMAYDI.
+// data/db.local.json — ish vaqtidagi ma'lumot (buyurtmalar, o'zgargan turlar va sozlamalar), .gitignore da.
+// Avval buyurtmalar (mijoz ismi, telefoni, emaili) git'dagi db.json ga yozilib, tasodifan commit qilinishi mumkin edi.
+function readSeed() {
+  if (fs.existsSync(SEED_FILE)) {
+    const seed = JSON.parse(fs.readFileSync(SEED_FILE, 'utf-8'));
+    return { ...seed, bookings: [] }; // boshlang'ich faylga tushib qolgan buyurtmalar ko'chirilmaydi
+  }
+  return {
+    tours: [],
+    bookings: [],
+    settings: {
+      exchangeRate: 12800,
+      telegram: { botToken: "", chatId: "", enabled: false },
+      adminPassword: "admin"
+    }
+  };
+}
+
 function readDb() {
   try {
     if (!fs.existsSync(DB_FILE)) {
-      const initial = {
-        tours: [],
-        bookings: [],
-        settings: {
-          exchangeRate: 12800,
-          telegram: { botToken: "", chatId: "", enabled: false },
-          adminPassword: "admin"
-        }
-      };
+      const initial = readSeed();
       writeDbOrThrow(initial);
       return initial;
     }
@@ -161,7 +224,7 @@ function readDb() {
   } catch (err) {
     // Bo'sh obyekt qaytarmaymiz: keyingi yozish butun faylni (barcha buyurtmalarni) o'chirib yuborardi
     console.error("Lokal DB o'qishda xatolik:", err.message);
-    throw new Error("Lokal ma'lumotlar fayli (data/db.json) buzilgan yoki o'qib bo'lmadi");
+    throw new Error(`Lokal ma'lumotlar fayli (${path.relative(__dirname, DB_FILE)}) buzilgan yoki o'qib bo'lmadi`);
   }
 }
 
@@ -266,7 +329,7 @@ async function initDatabase() {
       const { total, distinct_times: distinctTimes, base: baseTime } = orderCheck.rows[0];
       // COUNT(DISTINCT) NULL larni sanamaydi: barchasi NULL bo'lsa 0 chiqadi — bu ham "tartib yo'q" holati
       if (parseInt(total) > 1 && parseInt(distinctTimes) <= 1) {
-        const seedOrder = (readDb().tours || []).map(t => t.id);
+        const seedOrder = (readSeed().tours || []).map(t => t.id);
         const existing = (await client.query('SELECT id FROM tours ORDER BY id')).rows.map(r => r.id);
         const ordered = [
           ...seedOrder.filter(id => existing.includes(id)),
@@ -750,9 +813,27 @@ try {
     };
   }
 
+  // Xavfsizlik sarlavhalari. (Content-Security-Policy qo'yilmadi: sahifalar Tailwind CDN va
+  // inline skriptlardan foydalanadi, qat'iy CSP ularni buzadi.)
+  app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    res.set({
+      'X-Content-Type-Options': 'nosniff',
+      'X-Frame-Options': 'SAMEORIGIN',          // saytni begona sahifaga yashirincha joylashtirib bo'lmaydi
+      'Referrer-Policy': 'strict-origin-when-cross-origin',
+      'Permissions-Policy': 'camera=(), microphone=(), geolocation=()'
+    });
+    if (req.secure || req.headers['x-forwarded-proto'] === 'https') {
+      res.set('Strict-Transport-Security', 'max-age=15552000');
+    }
+    next();
+  });
+
   app.use(cors());
-  app.use(express.json({ limit: '10mb' }));
-  app.use(express.urlencoded({ extended: true }));
+  // Eng katta so'rov — barcha turlarni saqlash (~40 KB). 1 MB yetarli; avvalgi 10 MB ommaviy
+  // so'rovlar orqali serverni katta hajmli ma'lumot bilan band qilishga imkon berardi.
+  app.use(express.json({ limit: '1mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
   // Statik fayllarni tarqatish: faqat ruxsat berilgan sahifa va skriptlar.
   // (Avval butun papka ochiq edi va /data/db.json parol va tokenlar bilan yuklab olinardi.)
@@ -856,7 +937,7 @@ try {
   });
 
   // Mehmon buyurtma holatini tekshirishi (Public Lookup)
-  app.get('/api/bookings/lookup', async (req, res) => {
+  app.get('/api/bookings/lookup', lookupLimiter, async (req, res) => {
     const q = req.query.query ? req.query.query.trim().toLowerCase() : "";
     if (!q) return res.json([]);
 
@@ -878,8 +959,8 @@ try {
       durationDays: b.durationDays,
       status: b.status,
       totalPrice: b.totalPrice,
-      guestName: b.guestName,
-      guestEmail: b.guestEmail || b.email,
+      // Ommaviy javob: to'liq ism va email qaytarilmaydi (begona odam ID/telefonni bilsa ham)
+      guestName: maskName(b.guestName),
       createdAt: b.createdAt
     }));
 
@@ -887,7 +968,7 @@ try {
   });
 
   // Yangi buyurtma qabul qilish (Public POST)
-  app.post('/api/bookings', async (req, res) => {
+  app.post('/api/bookings', bookingLimiter, async (req, res) => {
     const data = sanitizePublicBooking(req.body);
 
     if (!data.guestName || !data.guestPhone) {
@@ -1133,6 +1214,9 @@ try {
   app.use((err, req, res, next) => {
     if (err && err.type === 'entity.parse.failed') {
       return res.status(400).json({ error: "So'rov formati noto'g'ri (JSON)" });
+    }
+    if (err && err.type === 'entity.too.large') {
+      return res.status(413).json({ error: "So'rov hajmi juda katta" });
     }
     console.error(`❌ ${req.method} ${req.path} xatolik:`, err && err.message);
     if (res.headersSent) return next(err);

@@ -11,3 +11,7 @@ npm-debug.log*
 
 # Logs
 *.log
+
+# Ish vaqtidagi lokal ma'lumotlar (mijozlar buyurtmalari) — git'ga tushmasin
+data/db.local.json
+data/*.tmp

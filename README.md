@@ -7,7 +7,7 @@ O'zbekiston bo'ylab eksklyuziv sayohat turlarini bron qilish, markaziy ma'lumotl
 ## 🏗 Backend Tizimi Arxitekturasi
 
 Platforma uchun **REST API** backend tizimi to'liq ishlab chiqildi:
-* **Fayllar:** `server.js` (Node.js Express) va `server.rb` (Ruby WEBrick)
+* **Fayllar:** `server.js` (Node.js Express)
 * **Ma'lumotlar bazasi:** `DATABASE_URL` berilsa — PostgreSQL (Supabase), aks holda lokal `data/db.json`. Internetda faqat PostgreSQL ishlating (pastdagi bo'limga qarang).
 * **Xavfsizlik:** Telegram Bot tokeni serverda saqlanadi, so'rovlar server orqali HTTPS orqali yuboriladi.
 
@@ -38,13 +38,11 @@ Platforma uchun **REST API** backend tizimi to'liq ishlab chiqildi:
 Mac-da terminalni ochib, loyiha papkasiga o'ting:
 
 ```bash
-# Ruby orqali (Mac-da darhol, qo'shimcha o'rnatishlarsiz ishlaydi):
-ruby server.rb
-
-# Yoki Node.js orqali (agar Node.js o'rnatilgan bo'lsa):
 npm install
 npm start
 ```
+
+Node.js 22 kerak (Render ham shu versiyani ishlatadi, `package.json` dagi `engines`); yangiroq versiyalarda ham ishlaydi. Lokal rejimda buyurtmalar `data/db.local.json` fayliga yoziladi (u git'ga kirmaydi). `data/db.json` faqat boshlang'ich turlar va sozlamalar uchun.
 
 Server ishga tushgach:
 * 🌐 **Bosh sahifa:** `http://localhost:3000/index.html`
@@ -69,9 +67,7 @@ Saytni istalgan qurilmadan (telefon, planshet) ishlatish uchun:
      - `ADMIN_SESSION_SECRET` = uzun tasodifiy satr (ixtiyoriy: server qayta ishga tushganda admin sessiyasi saqlanib qolishi uchun)
 4. **Deploy** tugmasini bosing.
 
-> 🔐 **Xavfsizlik:** Admin panel parol bilan himoyalangan. Standart `admin` paroli bilan faqat shu kompyuterdan (`localhost`) kirish mumkin. Internet orqali kirish uchun `ADMIN_PASSWORD` o'rnatilishi shart. 15 daqiqada 5 marta noto'g'ri urinishdan keyin kirish vaqtincha bloklanadi.
->
-> ⚠️ `server.rb` (Ruby) serverida bu himoyalar **yo'q**. Uni faqat lokal sinov uchun ishlating. 
+> 🔐 **Xavfsizlik:** Admin panel parol bilan himoyalangan. Standart `admin` paroli bilan faqat shu kompyuterdan (`localhost`) kirish mumkin. Internet orqali kirish uchun `ADMIN_PASSWORD` o'rnatilishi shart. 15 daqiqada 5 marta noto'g'ri urinishdan keyin kirish vaqtincha bloklanadi. Ommaviy so'rovlar ham cheklangan: buyurtmani tekshirish — 10 daqiqada 30 ta, yangi buyurtma — soatiga 10 ta (IP boshiga).
 5. 1 daqiqada sizga doimiy ishlaydigan online manzil beriladi (masalan: `https://aureon-travel.onrender.com`).
    - Mehmonlar sayti: `https://aureon-travel.onrender.com/`
    - Siz uchun admin: `https://aureon-travel.onrender.com/admin.html`
