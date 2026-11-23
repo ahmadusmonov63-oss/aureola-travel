@@ -44,6 +44,10 @@ npm start
 
 Node.js 22 kerak (Render ham shu versiyani ishlatadi, `package.json` dagi `engines`); yangiroq versiyalarda ham ishlaydi. Lokal rejimda buyurtmalar `data/db.local.json` fayliga yoziladi (u git'ga kirmaydi). `data/db.json` faqat boshlang'ich turlar va sozlamalar uchun.
 
+**Dizaynni o'zgartirganda:** sahifalar oldindan yig'ilgan `styles.css` dan foydalanadi (Tailwind CDN emas). HTML yoki JS ga yangi Tailwind klass qo'shsangiz, `npm run build:css` ni ishga tushirib, `styles.css` ni ham commit qiling. Sozlamalar: `tailwind.config.js`.
+
+**Email (SMTP):** server sertifikati tekshiriladi. Faqat o'z-o'zidan imzolangan sertifikatli shaxsiy SMTP server uchun `SMTP_ALLOW_SELF_SIGNED=true` o'rnating.
+
 Server ishga tushgach:
 * 🌐 **Bosh sahifa:** `http://localhost:3000/index.html`
 * 📝 **Bron qilish:** `http://localhost:3000/booking.html`

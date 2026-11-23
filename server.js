@@ -23,7 +23,7 @@ const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32
 // Brauzerga ochiq beriladigan fayllar. Qolganlari (data/db.json, server.js, ...) yopiq.
 const PUBLIC_FILES = new Set([
   'index.html', 'booking.html', 'admin.html',
-  'app.js', 'booking.js', 'admin.js', 'data.js'
+  'app.js', 'booking.js', 'admin.js', 'data.js', 'styles.css'
 ]);
 
 function sha256(value) {
@@ -747,8 +747,12 @@ async function sendEmailMessage({ to, subject, message, html, smtpConfig }) {
         user: user,
         pass: pass
       },
+      // SMTP server sertifikati tekshiriladi: aks holda tarmoqdagi begona server o'zini pochta serveri
+      // qilib ko'rsatib, login/parolni va xatlarni ushlab olishi mumkin edi. Gmail, Brevo, Resend kabi
+      // xizmatlarda bu muammosiz ishlaydi. Faqat o'z-o'zidan imzolangan sertifikatli shaxsiy SMTP server
+      // uchun SMTP_ALLOW_SELF_SIGNED=true muhit o'zgaruvchisi bilan o'chirish mumkin.
       tls: {
-        rejectUnauthorized: false
+        rejectUnauthorized: process.env.SMTP_ALLOW_SELF_SIGNED !== 'true'
       }
     });
 
@@ -957,6 +961,7 @@ try {
       startDate: b.startDate,
       startTime: b.startTime,
       durationDays: b.durationDays,
+      nights: b.nights,
       status: b.status,
       totalPrice: b.totalPrice,
       // Ommaviy javob: to'liq ism va email qaytarilmaydi (begona odam ID/telefonni bilsa ham)

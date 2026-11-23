@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "build:css": "tailwindcss -c tailwind.config.js -i tailwind.src.css -o styles.css --minify"
   },
   "keywords": [
     "travel",
@@ -23,5 +24,8 @@
     "express": "^4.19.2",
     "nodemailer": "^10.6.1",
     "pg": "^8.11.5"
+  },
+  "devDependencies": {
+    "tailwindcss": "^3.4.19"
   }
 }
