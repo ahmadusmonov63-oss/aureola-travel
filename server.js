@@ -153,27 +153,24 @@ function readDb() {
           adminPassword: "admin"
         }
       };
-      fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-      fs.writeFileSync(DB_FILE, JSON.stringify(initial, null, 2), 'utf-8');
+      writeDbOrThrow(initial);
       return initial;
     }
     const data = fs.readFileSync(DB_FILE, 'utf-8');
     return JSON.parse(data);
   } catch (err) {
-    console.error("Lokal DB o'qishda xatolik:", err);
-    return { tours: [], bookings: [], settings: { exchangeRate: 12800, telegram: {}, adminPassword: "admin" } };
+    // Bo'sh obyekt qaytarmaymiz: keyingi yozish butun faylni (barcha buyurtmalarni) o'chirib yuborardi
+    console.error("Lokal DB o'qishda xatolik:", err.message);
+    throw new Error("Lokal ma'lumotlar fayli (data/db.json) buzilgan yoki o'qib bo'lmadi");
   }
 }
 
-function writeDb(data) {
-  try {
-    fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
-    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf-8');
-    return true;
-  } catch (err) {
-    console.error("Lokal DB saqlashda xatolik:", err);
-    return false;
-  }
+// Avval vaqtinchalik faylga yozib, keyin almashtiramiz — yozish o'rtasida to'xtasa fayl buzilmaydi
+function writeDbOrThrow(data) {
+  fs.mkdirSync(path.dirname(DB_FILE), { recursive: true });
+  const tmp = `${DB_FILE}.${process.pid}.tmp`;
+  fs.writeFileSync(tmp, JSON.stringify(data, null, 2), 'utf-8');
+  fs.renameSync(tmp, DB_FILE);
 }
 
 // --- 2. POSTGRESQL (SUPABASE) ULASh VA BOSHINCHI SOZLASH ---
@@ -186,12 +183,19 @@ function getPgPool() {
   if (!pgPool) {
     try {
       const { Pool } = require('pg');
+      // sslmode ni URL dan olib tashlaymiz: aks holda u pastdagi ssl sozlamasini bekor qilib,
+      // Supabase sertifikatida "self-signed certificate" xatosini beradi.
+      const url = new URL(dbUrl);
+      url.searchParams.delete('sslmode');
+      const isLocalDb = ['localhost', '127.0.0.1', '::1'].includes(url.hostname);
+      const useSsl = process.env.DATABASE_SSL ? process.env.DATABASE_SSL !== 'false' : !isLocalDb;
+
       pgPool = new Pool({
-        connectionString: dbUrl,
-        ssl: { rejectUnauthorized: false },
+        connectionString: url.toString(),
+        ssl: useSsl ? { rejectUnauthorized: false } : false,
         connectionTimeoutMillis: 10000,
         idleTimeoutMillis: 30000,
-        max: 20
+        max: parseInt(process.env.DATABASE_POOL_MAX || '5', 10) // Supabase bepul tarifida ulanishlar cheklangan
       });
 
       pgPool.on('error', (err) => {
@@ -207,8 +211,7 @@ function getPgPool() {
 async function initDatabase() {
   const pool = getPgPool();
   if (!pool) {
-    console.log("ℹ️ DATABASE_URL topilmadi. Lokal db.json ishlatilmoqda.");
-    return false;
+    throw new Error("PostgreSQL pool yaratilmadi (DATABASE_URL formati yoki pg moduli xato)");
   }
 
   try {
@@ -254,25 +257,24 @@ async function initDatabase() {
       }
 
       // Agar PostgreSQL da buyurtmalar hali bo'lmasa, lokal db.json dan ko'chirib o'tkazish (Auto-migration)
+      const localDb = readDb();
       const resCount = await client.query('SELECT COUNT(*) FROM bookings');
-      if (parseInt(resCount.rows[0].count) === 0) {
-        const localDb = readDb();
-        if (localDb.bookings && localDb.bookings.length > 0) {
-          for (const b of localDb.bookings) {
-            await client.query(
-              'INSERT INTO bookings (id, data, created_at) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING',
-              [b.id, JSON.stringify(b), b.createdAt || new Date().toISOString()]
-            );
-          }
-          console.log(`✅ ${localDb.bookings.length} ta lokal buyurtma PostgreSQL (Supabase)ga ko'chirildi!`);
-        }
-        if (localDb.settings) {
+      if (parseInt(resCount.rows[0].count) === 0 && localDb.bookings && localDb.bookings.length > 0) {
+        for (const b of localDb.bookings) {
           await client.query(
-            'INSERT INTO settings (key, data) VALUES ($1, $2) ON CONFLICT (key) DO UPDATE SET data = $2',
-            ['main', JSON.stringify(localDb.settings)]
+            'INSERT INTO bookings (id, data, created_at) VALUES ($1, $2, $3) ON CONFLICT (id) DO NOTHING',
+            [b.id, JSON.stringify(b), b.createdAt || new Date().toISOString()]
           );
         }
+        console.log(`✅ ${localDb.bookings.length} ta lokal buyurtma PostgreSQL (Supabase)ga ko'chirildi!`);
       }
+
+      // Sozlamalar faqat bazada hali yo'q bo'lsa yoziladi. (Avval har qayta ishga tushishda
+      // bazadagi Telegram/valyuta sozlamalari db.json dagi standart qiymatlar bilan almashtirilardi.)
+      await client.query(
+        'INSERT INTO settings (key, data) VALUES ($1, $2) ON CONFLICT (key) DO NOTHING',
+        ['main', JSON.stringify(localDb.settings || DEFAULT_SETTINGS)]
+      );
 
       isPgConnected = true;
       console.log("🚀 PostgreSQL (Supabase) muvaffaqiyatli ulandi va barcha jadvallar tayyor!");
@@ -283,175 +285,176 @@ async function initDatabase() {
   } catch (err) {
     console.error("❌ PostgreSQL ulanishda xatolik:", err.message);
     isPgConnected = false;
-    return false;
+    throw err;
   }
 }
 
-// --- 3. MA'LUMOTLARNI BOSHQARISh (DB ABSTRACTION) ---
-async function getAllBookings() {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
+// DATABASE_URL berilgan, lekin baza ulanmasa — bir necha marta urinib ko'ramiz.
+// Baribir ulanmasa server ishga tushmaydi: aks holda buyurtmalar jimgina vaqtinchalik
+// db.json ga yozilib, server qayta ishga tushganda yo'qolardi.
+async function initDatabaseWithRetry(attempts = 5) {
+  if (!process.env.DATABASE_URL) {
+    console.log("ℹ️ DATABASE_URL topilmadi. Lokal db.json ishlatilmoqda.");
+    return false;
+  }
+  for (let i = 1; i <= attempts; i++) {
     try {
-      const res = await pool.query('SELECT data FROM bookings ORDER BY created_at DESC');
-      return res.rows.map(r => r.data);
-    } catch (e) {
-      console.error("PG bookings o'qishda xatolik:", e.message);
+      return await initDatabase();
+    } catch (err) {
+      if (i === attempts) break;
+      const waitMs = 2000 * i;
+      console.log(`   ${i}/${attempts}-urinish muvaffaqiyatsiz. ${waitMs / 1000} soniyadan keyin qayta urinamiz...`);
+      await new Promise(r => setTimeout(r, waitMs));
     }
+  }
+  console.error("❌ PostgreSQL ga ulanib bo'lmadi. DATABASE_URL ni tekshiring (Supabase: Session pooler manzili).");
+  process.exit(1);
+}
+
+// --- 3. MA'LUMOTLARNI BOSHQARISh (DB ABSTRACTION) ---
+// Qoida: DATABASE_URL berilgan bo'lsa, yagona manba — PostgreSQL. Uning xatolari yutilmaydi:
+// so'rov xato bilan tugaydi (500), ma'lumot esa jimgina o'chib ketadigan db.json ga yozilmaydi.
+// DATABASE_URL bo'lmasa — lokal db.json.
+function pg() {
+  return isPgConnected ? pgPool : null;
+}
+
+async function getAllBookings() {
+  const pool = pg();
+  if (pool) {
+    const res = await pool.query('SELECT data FROM bookings ORDER BY created_at DESC');
+    return res.rows.map(r => r.data);
   }
   return (readDb().bookings) || [];
 }
 
 async function saveBookingToDb(booking) {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
-    try {
-      await pool.query(
-        'INSERT INTO bookings (id, data, created_at, updated_at) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = $4',
-        [booking.id, JSON.stringify(booking), booking.createdAt || new Date().toISOString(), new Date().toISOString()]
-      );
-    } catch (e) {
-      console.error("PG booking saqlashda xatolik:", e.message);
-    }
+  const pool = pg();
+  if (pool) {
+    await pool.query(
+      'INSERT INTO bookings (id, data, created_at, updated_at) VALUES ($1, $2, $3, $4) ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = $4',
+      [booking.id, JSON.stringify(booking), booking.createdAt || new Date().toISOString(), new Date().toISOString()]
+    );
+    return booking;
   }
-  // Lokal db.json ga ham zaxira sifatida saqlaymiz
   const db = readDb();
   db.bookings = db.bookings || [];
   const existingIdx = db.bookings.findIndex(b => b.id === booking.id);
   if (existingIdx >= 0) db.bookings[existingIdx] = booking;
   else db.bookings.unshift(booking);
-  writeDb(db);
+  writeDbOrThrow(db);
   return booking;
 }
 
 async function updateBookingStatusInDb(id, newStatus) {
-  const pool = getPgPool();
-  let updatedBooking = null;
-
-  if (isPgConnected && pool) {
+  const updatedAt = new Date().toISOString();
+  const pool = pg();
+  if (pool) {
+    // Tranzaksiya + FOR UPDATE: o'qib-yozish orasida boshqa o'zgarish yo'qolmaydi
+    const client = await pool.connect();
     try {
-      const res = await pool.query('SELECT data FROM bookings WHERE id = $1', [id]);
-      if (res.rows.length > 0) {
-        const b = res.rows[0].data;
-        b.status = newStatus;
-        b.updatedAt = new Date().toISOString();
-        await pool.query(
-          'UPDATE bookings SET data = $1, updated_at = $2 WHERE id = $3',
-          [JSON.stringify(b), b.updatedAt, id]
-        );
-        updatedBooking = b;
+      await client.query('BEGIN');
+      const res = await client.query('SELECT data FROM bookings WHERE id = $1 FOR UPDATE', [id]);
+      if (!res.rows.length) {
+        await client.query('ROLLBACK');
+        return null;
       }
+      const updated = { ...res.rows[0].data, status: newStatus, updatedAt };
+      await client.query(
+        'UPDATE bookings SET data = $1, updated_at = $2 WHERE id = $3',
+        [JSON.stringify(updated), updatedAt, id]
+      );
+      await client.query('COMMIT');
+      return updated;
     } catch (e) {
-      console.error("PG status yangilashda xatolik:", e.message);
+      await client.query('ROLLBACK').catch(() => {});
+      throw e;
+    } finally {
+      client.release();
     }
   }
-
-  // Lokal zaxira
   const db = readDb();
   const localB = (db.bookings || []).find(b => b.id === id);
-  if (localB) {
-    localB.status = newStatus;
-    localB.updatedAt = new Date().toISOString();
-    writeDb(db);
-    if (!updatedBooking) updatedBooking = localB;
-  }
-
-  return updatedBooking;
+  if (!localB) return null;
+  localB.status = newStatus;
+  localB.updatedAt = updatedAt;
+  writeDbOrThrow(db);
+  return localB;
 }
 
 async function deleteBookingFromDb(id) {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
-    try {
-      await pool.query('DELETE FROM bookings WHERE id = $1', [id]);
-    } catch (e) {
-      console.error("PG booking o'chirishda xatolik:", e.message);
-    }
+  const pool = pg();
+  if (pool) {
+    await pool.query('DELETE FROM bookings WHERE id = $1', [id]);
+    return true;
   }
   const db = readDb();
   db.bookings = (db.bookings || []).filter(b => b.id !== id);
-  writeDb(db);
+  writeDbOrThrow(db);
   return true;
 }
 
+const DEFAULT_SETTINGS = { exchangeRate: 12800, telegram: {}, adminPassword: DEFAULT_ADMIN_PASSWORD };
+
 async function getSettingsFromDb() {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
-    try {
-      const res = await pool.query('SELECT data FROM settings WHERE key = $1', ['main']);
-      if (res.rows.length > 0) {
-        return res.rows[0].data;
-      }
-    } catch (e) {
-      console.error("PG settings o'qishda xatolik:", e.message);
-    }
+  const pool = pg();
+  if (pool) {
+    const res = await pool.query('SELECT data FROM settings WHERE key = $1', ['main']);
+    if (res.rows.length > 0) return res.rows[0].data;
   }
-  return (readDb().settings) || { exchangeRate: 12800, telegram: {}, adminPassword: "admin" };
+  return (readDb().settings) || { ...DEFAULT_SETTINGS };
 }
 
 async function saveSettingsToDb(newSettings) {
-  const pool = getPgPool();
   const current = await getSettingsFromDb();
   const merged = { ...current, ...newSettings };
 
-  if (isPgConnected && pool) {
-    try {
-      await pool.query(
-        'INSERT INTO settings (key, data, updated_at) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET data = $2, updated_at = $3',
-        ['main', JSON.stringify(merged), new Date().toISOString()]
-      );
-    } catch (e) {
-      console.error("PG settings saqlashda xatolik:", e.message);
-    }
+  const pool = pg();
+  if (pool) {
+    await pool.query(
+      'INSERT INTO settings (key, data, updated_at) VALUES ($1, $2, $3) ON CONFLICT (key) DO UPDATE SET data = $2, updated_at = $3',
+      ['main', JSON.stringify(merged), new Date().toISOString()]
+    );
+    return merged;
   }
-
-  // Lokal zaxira
   const db = readDb();
   db.settings = merged;
-  writeDb(db);
+  writeDbOrThrow(db);
   return merged;
 }
 
 async function getToursFromDb() {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
-    try {
-      const res = await pool.query('SELECT data FROM tours ORDER BY created_at ASC, id ASC');
-      if (res.rows.length > 0) {
-        return res.rows.map(r => r.data);
-      }
-    } catch (e) {
-      console.error("PG tours o'qishda xatolik:", e.message);
-    }
+  const pool = pg();
+  if (pool) {
+    const res = await pool.query('SELECT data FROM tours ORDER BY created_at ASC, id ASC');
+    return res.rows.map(r => r.data);
   }
   return (readDb().tours) || [];
 }
 
 async function saveTourToDb(tour) {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
-    try {
-      await pool.query(
-        'INSERT INTO tours (id, data, updated_at) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = $3',
-        [tour.id, JSON.stringify(tour), new Date().toISOString()]
-      );
-    } catch (e) {
-      console.error("PG tour saqlashda xatolik:", e.message);
-    }
+  const pool = pg();
+  if (pool) {
+    // Yangi tur ro'yxat oxiriga qo'shiladi (created_at = NOW()), mavjudining o'rni o'zgarmaydi
+    await pool.query(
+      'INSERT INTO tours (id, data, updated_at) VALUES ($1, $2, $3) ON CONFLICT (id) DO UPDATE SET data = $2, updated_at = $3',
+      [tour.id, JSON.stringify(tour), new Date().toISOString()]
+    );
+    return tour;
   }
-
   const db = readDb();
   db.tours = db.tours || [];
   const idx = db.tours.findIndex(t => t.id === tour.id);
   if (idx >= 0) db.tours[idx] = tour;
   else db.tours.push(tour);
-  writeDb(db);
+  writeDbOrThrow(db);
   return tour;
 }
 
 // Barcha turlarni bitta ro'yxat bilan almashtirish (admin: "standart holatga qaytarish")
 async function replaceAllToursInDb(tours) {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
+  const pool = pg();
+  if (pool) {
     const client = await pool.connect();
     try {
       await client.query('BEGIN');
@@ -466,15 +469,15 @@ async function replaceAllToursInDb(tours) {
       await client.query('COMMIT');
     } catch (e) {
       await client.query('ROLLBACK').catch(() => {});
-      console.error("PG turlarni almashtirishda xatolik:", e.message);
+      throw e;
     } finally {
       client.release();
     }
+    return tours;
   }
-
   const db = readDb();
   db.tours = tours;
-  writeDb(db);
+  writeDbOrThrow(db);
   return tours;
 }
 
@@ -548,17 +551,14 @@ async function priceBooking(data) {
 }
 
 async function deleteTourFromDb(id) {
-  const pool = getPgPool();
-  if (isPgConnected && pool) {
-    try {
-      await pool.query('DELETE FROM tours WHERE id = $1', [id]);
-    } catch (e) {
-      console.error("PG tour o'chirishda xatolik:", e.message);
-    }
+  const pool = pg();
+  if (pool) {
+    await pool.query('DELETE FROM tours WHERE id = $1', [id]);
+    return true;
   }
   const db = readDb();
   db.tours = (db.tours || []).filter(t => t.id !== id);
-  writeDb(db);
+  writeDbOrThrow(db);
   return true;
 }
 
@@ -707,6 +707,26 @@ try {
   const cors = require('cors');
 
   app = express();
+
+  // Express 4 async handlerlardagi xatolarni o'zi ushlamaydi (server qulab tushadi).
+  // Barcha route handlerlarni o'raymiz: xato bo'lsa pastdagi xato middleware'iga uzatiladi.
+  for (const method of ['get', 'post', 'put', 'patch', 'delete', 'all']) {
+    const original = app[method].bind(app);
+    app[method] = (routePath, ...handlers) => {
+      if (handlers.length === 0) return original(routePath); // app.get('sozlama')
+      return original(routePath, ...handlers.map(h => (typeof h === 'function' && h.length < 4)
+        ? (req, res, next) => {
+            try {
+              const result = h(req, res, next);
+              if (result && typeof result.catch === 'function') result.catch(next);
+            } catch (err) {
+              next(err);
+            }
+          }
+        : h));
+    };
+  }
+
   app.use(cors());
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
@@ -725,6 +745,7 @@ try {
       status: "ok",
       app: "Aureon Travel Backend",
       database: isPgConnected ? "PostgreSQL (Supabase)" : "Local JSON (db.json)",
+      persistent: isPgConnected || !process.env.RENDER,
       time: new Date().toISOString()
     });
   });
@@ -1063,13 +1084,23 @@ try {
     res.sendFile(path.join(__dirname, 'index.html'));
   });
 
+  // Umumiy xato ishlovchisi: baza yoki fayl xatosida mijozga "muvaffaqiyatli" deyilmaydi
+  app.use((err, req, res, next) => {
+    if (err && err.type === 'entity.parse.failed') {
+      return res.status(400).json({ error: "So'rov formati noto'g'ri (JSON)" });
+    }
+    console.error(`❌ ${req.method} ${req.path} xatolik:`, err && err.message);
+    if (res.headersSent) return next(err);
+    res.status(500).json({ error: "Serverda xatolik yuz berdi. Ma'lumot saqlanmadi, birozdan keyin qayta urinib ko'ring." });
+  });
+
 } catch (e) {
   console.log("Express moduli topilmadi:", e.message);
 }
 
 // 6. Serverni ishga tushirish
 if (app) {
-  initDatabase().then(() => {
+  initDatabaseWithRetry().then(() => {
     app.listen(PORT, '0.0.0.0', () => {
       console.log("==================================================");
       console.log(`  ✈️  AUREON TRAVEL BACKEND ISHGA TUSHDI!`);
@@ -1078,6 +1109,11 @@ if (app) {
       console.log(`  👉 Bosh sahifa: http://localhost:${PORT}/index.html`);
       console.log(`  👉 Admin panel: http://localhost:${PORT}/admin.html`);
       console.log("==================================================");
+      if (process.env.RENDER && !isPgConnected) {
+        console.warn("🚨 DIQQAT: Render'da DATABASE_URL o'rnatilmagan!");
+        console.warn("   Buyurtmalar va sozlamalar har qayta ishga tushishda (deploy, uyqu) O'CHIB KETADI.");
+        console.warn("   Supabase bazasini ulang: README.md dagi 'Ma'lumotlar bazasi' bo'limiga qarang.");
+      }
       getSettingsFromDb().then(s => {
         if (!process.env.ADMIN_PASSWORD && (!s.adminPassword || s.adminPassword === DEFAULT_ADMIN_PASSWORD)) {
           console.warn("⚠️  Admin paroli standart (\"admin\"). Unga faqat shu kompyuterdan kirish mumkin.");

@@ -8,7 +8,7 @@ O'zbekiston bo'ylab eksklyuziv sayohat turlarini bron qilish, markaziy ma'lumotl
 
 Platforma uchun **REST API** backend tizimi to'liq ishlab chiqildi:
 * **Fayllar:** `server.js` (Node.js Express) va `server.rb` (Ruby WEBrick)
-* **Ma'lumotlar bazasi:** `data/db.json` (barcha buyurtmalar, turlar va sozlamalar markaziy JSON bazada saqlanadi)
+* **Ma'lumotlar bazasi:** `DATABASE_URL` berilsa — PostgreSQL (Supabase), aks holda lokal `data/db.json`. Internetda faqat PostgreSQL ishlating (pastdagi bo'limga qarang).
 * **Xavfsizlik:** Telegram Bot tokeni serverda saqlanadi, so'rovlar server orqali HTTPS orqali yuboriladi.
 
 ### REST API Endpointlari:
@@ -18,6 +18,7 @@ Platforma uchun **REST API** backend tizimi to'liq ishlab chiqildi:
 | `GET` | `/api/status` | Server holatini tekshirish (Health check) |
 | `GET` | `/api/tours` | Barcha turlar ro'yxatini olish |
 | `POST` | `/api/tours` | Yangi tur qo'shish yoki tahrirlash |
+| `PUT` | `/api/tours` | Barcha turlarni almashtirish (standart holatga qaytarish) |
 | `DELETE` | `/api/tours/:id` | Turni o'chirish |
 | `GET` | `/api/bookings` | Barcha arizalar (Admin uchun) |
 | `GET` | `/api/bookings/lookup?query=...` | Mehmon arizasini tekshirish (ID yoki Tel) |
@@ -62,7 +63,10 @@ Saytni istalgan qurilmadan (telefon, planshet) ishlatish uchun:
    - **Environment:** `Node`
    - **Build Command:** `npm install`
    - **Start Command:** `node server.js`
-   - **Environment Variables:** `ADMIN_PASSWORD` = kuchli parol (majburiy). Ixtiyoriy: `ADMIN_SESSION_SECRET` = uzun tasodifiy satr (server qayta ishga tushganda admin sessiyasi saqlanib qolishi uchun).
+   - **Environment Variables:**
+     - `ADMIN_PASSWORD` = kuchli parol (majburiy)
+     - `DATABASE_URL` = Supabase ulanish manzili (majburiy, pastdagi bo'limga qarang)
+     - `ADMIN_SESSION_SECRET` = uzun tasodifiy satr (ixtiyoriy: server qayta ishga tushganda admin sessiyasi saqlanib qolishi uchun)
 4. **Deploy** tugmasini bosing.
 
 > 🔐 **Xavfsizlik:** Admin panel parol bilan himoyalangan. Standart `admin` paroli bilan faqat shu kompyuterdan (`localhost`) kirish mumkin. Internet orqali kirish uchun `ADMIN_PASSWORD` o'rnatilishi shart. 15 daqiqada 5 marta noto'g'ri urinishdan keyin kirish vaqtincha bloklanadi.
@@ -71,3 +75,25 @@ Saytni istalgan qurilmadan (telefon, planshet) ishlatish uchun:
 5. 1 daqiqada sizga doimiy ishlaydigan online manzil beriladi (masalan: `https://aureon-travel.onrender.com`).
    - Mehmonlar sayti: `https://aureon-travel.onrender.com/`
    - Siz uchun admin: `https://aureon-travel.onrender.com/admin.html`
+
+---
+
+## 🗄 Ma'lumotlar bazasi (Supabase PostgreSQL)
+
+Render'ning bepul serverida fayllar **vaqtinchalik**: har deploy, qayta ishga tushish yoki uyqudan uyg'onishda `data/db.json` dastlabki holatiga qaytadi. Shuning uchun `DATABASE_URL` bo'lmasa **barcha buyurtmalar va sozlamalar o'chib ketadi**. Bepul Supabase bazasini ulang:
+
+1. **[supabase.com](https://supabase.com)** da bepul loyiha yarating. Ma'lumotlar bazasi parolini yozib oling.
+2. Loyiha sahifasida **Connect** tugmasini bosing va **Session pooler** manzilini nusxalang. U taxminan shunday ko'rinadi:
+   ```
+   postgresql://postgres.abcdefgh:[PAROL]@aws-0-eu-central-1.pooler.supabase.com:5432/postgres
+   ```
+   > ⚠️ **Direct connection** (`db.xxxx.supabase.co`) manzilini ishlatmang: u faqat IPv6 orqali ishlaydi, Render esa IPv6 ni qo'llamaydi, shuning uchun ulanish bo'lmaydi.
+3. `[PAROL]` o'rniga parolingizni qo'ying. Parolda `@ : / ? # %` kabi belgilar bo'lsa, ularni URL-kodlang (masalan `@` → `%40`) yoki parolni faqat harf va raqamlardan iborat qilib yangilang.
+4. Render'da **Environment** bo'limiga `DATABASE_URL` = shu manzilni qo'shing va qayta deploy qiling.
+5. Tekshirish: `https://<saytingiz>/api/status` ochilganda `"database": "PostgreSQL (Supabase)"` va `"persistent": true` chiqishi kerak.
+
+**Qanday ishlaydi:**
+- Birinchi ulanishda jadvallar avtomatik yaratiladi. `db.json` dagi turlar, buyurtmalar va sozlamalar bazaga ko'chiriladi (faqat bazada hali yo'q bo'lsa — keyingi ishga tushishlarda bazadagi ma'lumotlar ustidan yozilmaydi).
+- `DATABASE_URL` berilgan bo'lsa, server faqat PostgreSQL bilan ishlaydi. Baza ulanmasa, server 5 marta urinib ko'radi va ishga tushmaydi (Render loglarida sababi ko'rinadi). Buyurtmalar jimgina vaqtinchalik faylga yozilib yo'qolmaydi.
+- Baza vaqtincha javob bermasa, mijoz va admin "saqlandi" emas, xato xabarini ko'radi.
+- Qo'shimcha sozlamalar: `DATABASE_POOL_MAX` (standart 5 ta ulanish), `DATABASE_SSL=false` (SSL siz lokal PostgreSQL uchun; `localhost` uchun avtomatik).

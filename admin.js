@@ -70,7 +70,8 @@ async function syncDataWithBackend() {
       if (res.ok) {
         isBackendOnline = true;
         const remoteBookings = await res.json();
-        if (Array.isArray(remoteBookings) && remoteBookings.length > 0) {
+        // Server — yagona manba: bo'sh ro'yxat ham qabul qilinadi (aks holda o'chirilgan arizalar qolib ketadi)
+        if (Array.isArray(remoteBookings)) {
           allBookings = remoteBookings;
           saveBookings(allBookings);
           updateStats();
@@ -678,12 +679,8 @@ async function applyStatusChangeAndNotify() {
   if (!booking) return;
 
   const oldStatus = booking.status;
-  booking.status = currentActionTargetStatus;
-  saveBookings(allBookings);
-  updateStats();
-  renderBookingsTable();
 
-  // Backend API ga status yangilanishini yuborish
+  // Avval serverga yuboramiz: server xato qaytarsa, holat "saqlandi" deb ko'rsatilmaydi
   let sentToBackend = false;
   const statusApi = getApiUrl(`/api/bookings/${booking.id}/status`);
   if (statusApi) {
@@ -693,11 +690,24 @@ async function applyStatusChangeAndNotify() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: currentActionTargetStatus })
       });
-      if (res.ok) sentToBackend = true;
+      if (res.ok) {
+        sentToBackend = true;
+      } else if (res.status !== 401) {
+        const data = await res.json().catch(() => ({}));
+        alert("❌ Holat saqlanmadi: " + (data.error || `Server xatosi (${res.status})`));
+        return;
+      } else {
+        return; // 401: login oynasi ochildi
+      }
     } catch (e) {
       console.warn("Backendga status yuborilmadi, brauzerdan yuboriladi:", e);
     }
   }
+
+  booking.status = currentActionTargetStatus;
+  saveBookings(allBookings);
+  updateStats();
+  renderBookingsTable();
 
   // Agar server orqali Telegramga yuborilmagan bo'lsa, brauzerdan yuborish
   if (!sentToBackend) {
@@ -751,8 +761,24 @@ function changeBookingStatus(bookingId, newStatus) {
   openStatusActionModal(bookingId, newStatus);
 }
 
-function deleteBooking(bookingId) {
+async function deleteBooking(bookingId) {
   if (confirm(`Rostdan ham ${bookingId} raqamli arizani o'chirmoqchimisiz?`)) {
+    // Serverdan ham o'chiramiz — aks holda keyingi sinxronlashda ariza qaytib chiqadi
+    const api = getApiUrl(`/api/bookings/${encodeURIComponent(bookingId)}`);
+    if (api) {
+      try {
+        const res = await fetch(api, { method: "DELETE" });
+        if (res.status === 401) return;
+        if (!res.ok) {
+          const data = await res.json().catch(() => ({}));
+          alert("❌ Ariza o'chirilmadi: " + (data.error || `Server xatosi (${res.status})`));
+          return;
+        }
+      } catch (e) {
+        alert("❌ Serverga ulanib bo'lmadi, ariza o'chirilmadi.");
+        return;
+      }
+    }
     allBookings = allBookings.filter(b => b.id !== bookingId);
     saveBookings(allBookings);
     updateStats();
