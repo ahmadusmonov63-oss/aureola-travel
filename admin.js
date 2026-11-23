@@ -151,7 +151,7 @@ function updateStats() {
 }
 
 function switchTab(tabId) {
-  const tabs = ["tab-bookings", "tab-tours", "tab-telegram", "tab-currency"];
+  const tabs = ["tab-bookings", "tab-tours", "tab-telegram", "tab-currency", "tab-backup"];
   tabs.forEach(id => {
     const el = document.getElementById(id);
     const btn = document.getElementById(`btn-${id}`);
@@ -175,6 +175,9 @@ function switchTab(tabId) {
   }
   if (tabId === "tab-currency") {
     updateCurrencyTab();
+  }
+  if (tabId === "tab-backup") {
+    loadBackupStatus();
   }
 }
 
@@ -2178,5 +2181,124 @@ async function handleSendEmailSubmit() {
   } finally {
     if (btn) btn.disabled = false;
     if (btnText) btnText.textContent = "Server Orqali Jo'natish";
+  }
+}
+
+
+// ==========================================
+// ZAXIRA NUSXA (BACKUP)
+// ==========================================
+function showBackupResult(ok, html) {
+  const box = document.getElementById("backup-result");
+  if (!box) return;
+  box.className = "p-3 rounded-xl text-xs font-semibold " + (ok ? "bg-emerald-100 text-emerald-800" : "bg-rose-100 text-rose-800");
+  box.innerHTML = html;
+  box.classList.remove("hidden");
+}
+
+async function loadBackupStatus() {
+  const el = document.getElementById("backup-status-text");
+  const api = getApiUrl("/api/admin/backup/status");
+  if (!el || !api) return;
+  try {
+    const res = await fetch(api);
+    if (!res.ok) { el.textContent = "Holatni olib bo'lmadi."; return; }
+    const s = await res.json();
+    const last = s.lastAutoBackupAt ? new Date(s.lastAutoBackupAt).toLocaleString("uz-UZ") : "hali yuborilmagan";
+    el.textContent = s.autoBackupEnabled
+      ? `✅ Yoqilgan. Oxirgi zaxira: ${last}`
+      : `⚠️ O'chiq: avval "Telegram Bot Sozlamalari" bo'limida bot tokeni va Chat ID ni kiriting. Oxirgi zaxira: ${last}`;
+  } catch (e) {
+    el.textContent = "Serverga ulanib bo'lmadi.";
+  }
+}
+
+async function downloadBackup(format) {
+  const api = getApiUrl(`/api/admin/backup?format=${format === "csv" ? "csv" : "json"}`);
+  if (!api) { alert("Zaxira faqat server orqali ishlaganda mavjud."); return; }
+  try {
+    const res = await fetch(api);
+    if (res.status === 401) return; // login oynasi ochildi
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      showBackupResult(false, `❌ Yuklab bo'lmadi: ${data.error || res.status}`);
+      return;
+    }
+    const blob = await res.blob();
+    const match = /filename="([^"]+)"/.exec(res.headers.get("Content-Disposition") || "");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = match ? match[1] : `aureon-zaxira.${format}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+    showBackupResult(true, `✅ Fayl yuklab olindi: ${a.download}`);
+  } catch (e) {
+    showBackupResult(false, "❌ Serverga ulanib bo'lmadi: " + e.message);
+  }
+}
+
+async function sendBackupToTelegramNow() {
+  const api = getApiUrl("/api/admin/backup/telegram");
+  const btn = document.getElementById("btn-backup-telegram");
+  if (!api) return;
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(api, { method: "POST" });
+    if (res.status === 401) return;
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      showBackupResult(true, `✅ Zaxira Telegram'ga yuborildi: ${data.counts.bookings} ta buyurtma, ${data.counts.tours} ta tur.`);
+      loadBackupStatus();
+    } else {
+      showBackupResult(false, `❌ Yuborilmadi: ${data.error || res.status}`);
+    }
+  } catch (e) {
+    showBackupResult(false, "❌ Serverga ulanib bo'lmadi: " + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+async function restoreBackupFromFile() {
+  const input = document.getElementById("backup-restore-file");
+  const btn = document.getElementById("btn-backup-restore");
+  const api = getApiUrl("/api/admin/restore");
+  const file = input && input.files && input.files[0];
+  if (!file) { alert("Avval JSON zaxira faylini tanlang."); return; }
+  if (!api) return;
+
+  let backup;
+  try {
+    backup = JSON.parse(await file.text());
+  } catch (e) {
+    showBackupResult(false, "❌ Fayl JSON formatida emas.");
+    return;
+  }
+  const nB = Array.isArray(backup.bookings) ? backup.bookings.length : 0;
+  const nT = Array.isArray(backup.tours) ? backup.tours.length : 0;
+  if (!confirm(`Zaxiradan ${nB} ta buyurtma va ${nT} ta tur tiklanadi (bir xil ID li yozuvlar fayldagisi bilan almashtiriladi, boshqalari o'chirilmaydi). Davom etilsinmi?`)) return;
+
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(api, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(backup)
+    });
+    if (res.status === 401) return;
+    const data = await res.json().catch(() => ({}));
+    if (res.ok) {
+      showBackupResult(true, `✅ Tiklandi: ${data.restored.bookings} ta buyurtma, ${data.restored.tours} ta tur.`);
+      input.value = "";
+      loadData();
+    } else {
+      showBackupResult(false, `❌ Tiklanmadi: ${data.error || res.status}`);
+    }
+  } catch (e) {
+    showBackupResult(false, "❌ Serverga ulanib bo'lmadi: " + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }

@@ -701,6 +701,146 @@ function sendTelegramMessage(botToken, chatId, text) {
   });
 }
 
+// Telegram'ga fayl (hujjat) yuborish — multipart/form-data
+function sendTelegramDocument(botToken, chatId, filename, content, caption) {
+  return new Promise((resolve) => {
+    if (!botToken || !chatId) return resolve({ success: false, error: "Telegram sozlanmagan" });
+
+    const boundary = '----aureon' + crypto.randomBytes(12).toString('hex');
+    const field = (name, value) =>
+      `--${boundary}\r\nContent-Disposition: form-data; name="${name}"\r\n\r\n${value}\r\n`;
+    const body = Buffer.concat([
+      Buffer.from(field('chat_id', chatId) + (caption ? field('caption', caption) : '')),
+      Buffer.from(`--${boundary}\r\nContent-Disposition: form-data; name="document"; filename="${filename}"\r\n` +
+        `Content-Type: application/octet-stream\r\n\r\n`),
+      Buffer.isBuffer(content) ? content : Buffer.from(content, 'utf-8'),
+      Buffer.from(`\r\n--${boundary}--\r\n`)
+    ]);
+
+    const req = https.request({
+      hostname: 'api.telegram.org',
+      port: 443,
+      path: `/bot${botToken}/sendDocument`,
+      method: 'POST',
+      headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}`, 'Content-Length': body.length },
+      timeout: 30000
+    }, (res) => {
+      let data = '';
+      res.on('data', chunk => data += chunk);
+      res.on('end', () => {
+        try {
+          const resp = JSON.parse(data);
+          resolve({ success: !!resp.ok, error: resp.ok ? undefined : resp.description });
+        } catch (e) {
+          resolve({ success: false, error: data.slice(0, 200) });
+        }
+      });
+    });
+    req.on('error', (err) => resolve({ success: false, error: err.message }));
+    req.on('timeout', () => { req.destroy(); resolve({ success: false, error: "Telegram timeout" }); });
+    req.write(body);
+    req.end();
+  });
+}
+
+// --- 4.2 ZAXIRA NUSXA (BACKUP) ---
+// Bepul Supabase tarifida yuklab olinadigan zaxira yo'q. Shuning uchun:
+//  - admin paneldan JSON (tiklash uchun) va CSV (Excel uchun) yuklab olish mumkin;
+//  - Telegram sozlangan bo'lsa, server har kuni JSON zaxirani admin chatiga yuboradi.
+// Maxfiy sozlamalar (parol, bot tokeni, SMTP paroli) zaxiraga kirmaydi.
+const BACKUP_INTERVAL_MS = 24 * 60 * 60 * 1000;
+
+async function buildBackup() {
+  const [bookings, tours, settings] = await Promise.all([getAllBookings(), getToursFromDb(), getSettingsFromDb()]);
+  return {
+    app: "aureon-travel",
+    backupVersion: 1,
+    createdAt: new Date().toISOString(),
+    counts: { bookings: bookings.length, tours: tours.length },
+    bookings,
+    tours,
+    settings: { exchangeRate: settings.exchangeRate }
+  };
+}
+
+function backupFilename(ext) {
+  const stamp = new Date().toISOString().slice(0, 16).replace(/[T:]/g, '-');
+  return `aureon-zaxira-${stamp}.${ext}`;
+}
+
+const CSV_COLUMNS = [
+  ['id', 'ID'], ['createdAt', 'Yaratilgan'], ['status', 'Holat'], ['tourTitle', 'Tur'],
+  ['startDate', 'Sana'], ['startTime', 'Vaqt'], ['durationDays', 'Kun'], ['nights', 'Kecha'],
+  ['adults', 'Kattalar'], ['children', 'Bolalar'], ['hotelOption', 'Otel'], ['guideOption', 'Gid'],
+  ['guideLanguage', 'Gid tili'], ['totalPrice', "Narx (so'm)"], ['guestName', 'Mijoz'],
+  ['guestPhone', 'Telefon'], ['guestEmail', 'Email'], ['pickupLocation', 'Olib ketish joyi'], ['note', 'Izoh']
+];
+
+function csvCell(value) {
+  let s = value === undefined || value === null ? '' : String(value);
+  // CSV formula injection: Excel "=", "+", "-", "@" bilan boshlangan katakni formula deb bajarmasin
+  if (/^[=+\-@\t\r]/.test(s)) s = "'" + s;
+  return /[",\n\r;]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+}
+
+function bookingsToCsv(bookings) {
+  const rows = [CSV_COLUMNS.map(c => c[1]).join(',')];
+  for (const b of bookings) {
+    rows.push(CSV_COLUMNS.map(([key]) => csvCell(key === 'pickupLocation' ? (b.pickupLocation || b.roomNumber) : b[key])).join(','));
+  }
+  return '﻿' + rows.join('\r\n'); // BOM: Excel o'zbek/rus harflarini to'g'ri ko'rsatishi uchun
+}
+
+async function sendBackupToTelegram(reason) {
+  const settings = await getSettingsFromDb();
+  const tg = settings.telegram || {};
+  if (!tg.botToken || !tg.chatId) {
+    return { success: false, error: "Telegram bot sozlanmagan (Telegram bo'limida token va Chat ID kiriting)" };
+  }
+  const backup = await buildBackup();
+  const caption = `🗄 Aureon Travel zaxira nusxasi (${reason})\n` +
+    `📋 Buyurtmalar: ${backup.counts.bookings} | 🗺 Turlar: ${backup.counts.tours}\n` +
+    `🕒 ${new Date().toLocaleString('uz-UZ', { timeZone: 'Asia/Tashkent' })}\n` +
+    `Tiklash: Admin panel → Zaxira → "Zaxiradan tiklash"`;
+  const result = await sendTelegramDocument(tg.botToken, tg.chatId, backupFilename('json'),
+    JSON.stringify(backup, null, 2), caption);
+  if (result.success) {
+    await saveSettingsToDb({ lastAutoBackupAt: new Date().toISOString() });
+  }
+  return { ...result, counts: backup.counts };
+}
+
+// Har soatda tekshiradi: oxirgi zaxiradan 24 soat o'tgan bo'lsa, Telegram'ga yuboradi.
+// Oxirgi vaqt bazada saqlanadi, shuning uchun server qayta ishga tushsa ham kuniga bir marta yuboriladi.
+// O'chirish: BACKUP_TELEGRAM=false muhit o'zgaruvchisi.
+function startBackupScheduler() {
+  if (process.env.BACKUP_TELEGRAM === 'false') {
+    console.log("ℹ️ Telegram'ga avtomatik zaxira o'chirilgan (BACKUP_TELEGRAM=false)");
+    return;
+  }
+  let running = false;
+  const tick = async () => {
+    if (running) return;
+    running = true;
+    try {
+      const settings = await getSettingsFromDb();
+      const tg = settings.telegram || {};
+      if (!tg.enabled || !tg.botToken || !tg.chatId) return;
+      const last = Date.parse(settings.lastAutoBackupAt || 0) || 0;
+      if (Date.now() - last < BACKUP_INTERVAL_MS) return;
+      const result = await sendBackupToTelegram("kunlik avtomatik");
+      if (result.success) console.log(`✅ Kunlik zaxira Telegram'ga yuborildi (${result.counts.bookings} ta buyurtma)`);
+      else console.error("❌ Kunlik zaxira yuborilmadi:", result.error);
+    } catch (err) {
+      console.error("❌ Kunlik zaxira xatoligi:", err.message);
+    } finally {
+      running = false;
+    }
+  };
+  setTimeout(tick, 60 * 1000);                 // ishga tushgandan 1 daqiqa keyin
+  setInterval(tick, 60 * 60 * 1000).unref();   // keyin har soatda
+}
+
 // --- 4.1 EMAIL (SMTP) XABARLARI ---
 async function sendEmailMessage({ to, subject, message, html, smtpConfig }) {
   const settings = await getSettingsFromDb();
@@ -836,7 +976,10 @@ try {
   app.use(cors());
   // Eng katta so'rov — barcha turlarni saqlash (~40 KB). 1 MB yetarli; avvalgi 10 MB ommaviy
   // so'rovlar orqali serverni katta hajmli ma'lumot bilan band qilishga imkon berardi.
-  app.use(express.json({ limit: '1mb' }));
+  // Zaxiradan tiklash fayli katta bo'lishi mumkin: unga alohida (20 MB) parser faqat admin
+  // tekshiruvidan KEYIN qo'llanadi, shuning uchun bu yo'l umumiy parserdan chiqarib qo'yilgan.
+  const defaultJsonParser = express.json({ limit: '1mb' });
+  app.use((req, res, next) => (req.path === '/api/admin/restore' ? next() : defaultJsonParser(req, res, next)));
   app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 
   // Statik fayllarni tarqatish: faqat ruxsat berilgan sahifa va skriptlar.
@@ -1205,6 +1348,59 @@ try {
     }
   });
 
+  // 5. ZAXIRA NUSXA (faqat admin)
+  app.get('/api/admin/backup', requireAdmin, async (req, res) => {
+    const backup = await buildBackup();
+    res.set('Cache-Control', 'no-store');
+    if (req.query.format === 'csv') {
+      res.set('Content-Type', 'text/csv; charset=utf-8');
+      res.set('Content-Disposition', `attachment; filename="${backupFilename('csv')}"`);
+      return res.send(bookingsToCsv(backup.bookings));
+    }
+    res.set('Content-Disposition', `attachment; filename="${backupFilename('json')}"`);
+    res.json(backup);
+  });
+
+  app.get('/api/admin/backup/status', requireAdmin, async (req, res) => {
+    const s = await getSettingsFromDb();
+    const tg = s.telegram || {};
+    res.json({
+      lastAutoBackupAt: s.lastAutoBackupAt || null,
+      autoBackupEnabled: process.env.BACKUP_TELEGRAM !== 'false' && !!(tg.enabled && tg.botToken && tg.chatId)
+    });
+  });
+
+  app.post('/api/admin/backup/telegram', requireAdmin, async (req, res) => {
+    const result = await sendBackupToTelegram("qo'lda yuborilgan");
+    if (!result.success) return res.status(400).json({ success: false, error: result.error });
+    res.json({ success: true, counts: result.counts });
+  });
+
+  // Zaxiradan tiklash: faqat QO'SHADI yoki YANGILAYDI (ID bo'yicha), hech narsani o'chirmaydi.
+  app.post('/api/admin/restore', requireAdmin, express.json({ limit: '20mb' }), async (req, res) => {
+    const backup = req.body || {};
+    if (backup.app !== 'aureon-travel' || !Array.isArray(backup.bookings) || !Array.isArray(backup.tours)) {
+      return res.status(400).json({ error: "Bu Aureon Travel zaxira fayli emas (JSON formatidagi zaxirani tanlang)" });
+    }
+
+    const bookings = [];
+    for (const raw of backup.bookings) {
+      const b = sanitizePublicBooking(raw);
+      if (typeof b.id !== 'string' || !/^[A-Za-z0-9_-]{1,64}$/.test(b.id)) {
+        return res.status(400).json({ error: "Zaxirada noto'g'ri buyurtma ID bor" });
+      }
+      bookings.push(b);
+    }
+    for (const t of backup.tours) {
+      const err = validateTour(t);
+      if (err) return res.status(400).json({ error: `Zaxiradagi tur xato: ${err}` });
+    }
+
+    for (const b of bookings) await saveBookingToDb(b);
+    for (const t of backup.tours) await saveTourToDb(t);
+    res.json({ success: true, restored: { bookings: bookings.length, tours: backup.tours.length } });
+  });
+
   // Noma'lum API manzillari uchun JSON 404 (index.html qaytarmaslik uchun)
   app.all('/api/*', (req, res) => {
     res.status(404).json({ error: "API manzili topilmadi" });
@@ -1235,6 +1431,7 @@ try {
 // 6. Serverni ishga tushirish
 if (app) {
   initDatabaseWithRetry().then(() => {
+    startBackupScheduler();
     app.listen(PORT, '0.0.0.0', () => {
       console.log("==================================================");
       console.log(`  ✈️  AUREON TRAVEL BACKEND ISHGA TUSHDI!`);

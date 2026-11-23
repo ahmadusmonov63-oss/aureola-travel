@@ -98,6 +98,17 @@ Render'ning bepul serverida fayllar **vaqtinchalik**: har deploy, qayta ishga tu
 - Baza vaqtincha javob bermasa, mijoz va admin "saqlandi" emas, xato xabarini ko'radi.
 - Qo'shimcha sozlamalar: `DATABASE_POOL_MAX` (standart 5 ta ulanish), `DATABASE_SSL=false` (SSL siz lokal PostgreSQL uchun; `localhost` uchun avtomatik).
 
+### 🗄 Zaxira nusxa (backup)
+
+Bepul Supabase tarifida yuklab olinadigan zaxira yo'q, shuning uchun saytning o'zida zaxira tizimi bor (**Admin panel → Zaxira**):
+
+- **Excel (CSV) yuklab olish** — barcha buyurtmalar jadval ko'rinishida (Excel / Google Sheets).
+- **To'liq zaxira (JSON)** — buyurtmalar, turlar va valyuta kursi; shu fayldan tiklanadi.
+- **Telegram'ga avtomatik zaxira** — Telegram bot ulangan bo'lsa, server **har kuni** JSON zaxirani admin chatiga yuboradi (oxirgi yuborilgan vaqt bazada saqlanadi, server qayta ishga tushsa ham kuniga bir marta). O'chirish: `BACKUP_TELEGRAM=false`.
+- **Zaxiradan tiklash** — JSON faylni tanlang: buyurtma va turlar ID bo'yicha qo'shiladi yoki yangilanadi, hozirgi ma'lumotlar o'chirilmaydi.
+
+Admin paroli, Telegram bot tokeni va SMTP paroli zaxiraga kirmaydi. Zaxira faylida mijozlarning shaxsiy ma'lumotlari bor — uni ishonchli joyda saqlang.
+
 ### 💤 Supabase va Render uxlab qolmasligi uchun (UptimeRobot)
 
 - Supabase bepul loyihani **7 kun faolsiz** qolsa to'xtatadi. Shunda Render serveri qayta ishga tushganda bazaga ulana olmaydi va sayt ishlamay qoladi.
