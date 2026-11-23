@@ -256,6 +256,28 @@ async function initDatabase() {
         if (localTours.length) console.log(`✅ ${localTours.length} ta tur PostgreSQL ga ko'chirildi`);
       }
 
+      // Eski jadvalga created_at ustuni keyin qo'shilganda barcha turlarga bir xil vaqt yoziladi
+      // va ular alifbo bo'yicha chiqib qoladi. Shunday bo'lsa, tartibni db.json dagidek tiklaymiz
+      // (faqat created_at o'zgaradi, tur ma'lumotlariga tegilmaydi).
+      const orderCheck = await client.query(
+        'SELECT COUNT(*) AS total, COUNT(DISTINCT created_at) AS distinct_times, MIN(created_at) AS base FROM tours'
+      );
+      const { total, distinct_times: distinctTimes, base: baseTime } = orderCheck.rows[0];
+      // COUNT(DISTINCT) NULL larni sanamaydi: barchasi NULL bo'lsa 0 chiqadi — bu ham "tartib yo'q" holati
+      if (parseInt(total) > 1 && parseInt(distinctTimes) <= 1) {
+        const seedOrder = (readDb().tours || []).map(t => t.id);
+        const existing = (await client.query('SELECT id FROM tours ORDER BY id')).rows.map(r => r.id);
+        const ordered = [
+          ...seedOrder.filter(id => existing.includes(id)),
+          ...existing.filter(id => !seedOrder.includes(id))
+        ];
+        const base = baseTime ? new Date(baseTime).getTime() : Date.now();
+        for (let i = 0; i < ordered.length; i++) {
+          await client.query('UPDATE tours SET created_at = $1 WHERE id = $2', [new Date(base + i).toISOString(), ordered[i]]);
+        }
+        console.log(`✅ Turlar tartibi tiklandi: ${ordered.join(', ')}`);
+      }
+
       // Agar PostgreSQL da buyurtmalar hali bo'lmasa, lokal db.json dan ko'chirib o'tkazish (Auto-migration)
       const localDb = readDb();
       const resCount = await client.query('SELECT COUNT(*) FROM bookings');
