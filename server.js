@@ -104,9 +104,41 @@ function recordLoginFailure(ip) {
 }
 
 // Sozlamalardan maxfiy maydonlarni olib tashlash (javobga chiqarmaslik uchun)
+// Javobga chiqarmaslik: admin paroli va SMTP paroli. SMTP paroli o'rniga faqat "bor/yo'q" belgisi.
 function withoutSecrets(settings) {
   const { adminPassword, ...rest } = settings || {};
+  if (rest.email && typeof rest.email === 'object') {
+    const { pass, ...email } = rest.email;
+    rest.email = { ...email, hasPassword: !!pass };
+  }
   return rest;
+}
+
+// Admin paneldan kelgan email (SMTP) sozlamalarini tozalab, mavjudlari bilan birlashtirish.
+// Parol maydoni bo'sh kelsa, saqlangan parol o'zgarmaydi (admin uni qayta kiritishi shart emas).
+// Server (host) yoki login (user) o'zgarsa va yangi parol berilmasa, eski parol o'chiriladi —
+// aks holda saqlangan parol yangi (begona) serverga yuborilishi mumkin edi.
+const EMAIL_TEXT_FIELDS = ['host', 'user', 'senderName', 'testEmail'];
+function mergeEmailConfig(input, existing) {
+  const prev = (existing && typeof existing === 'object') ? existing : {};
+  const out = { ...prev };
+  for (const f of EMAIL_TEXT_FIELDS) {
+    if (input[f] !== undefined) out[f] = String(input[f]).replace(/[\r\n]/g, '').trim().slice(0, 200);
+  }
+  if (input.port !== undefined && input.port !== '') {
+    const port = parseInt(input.port, 10);
+    if (!(port >= 1 && port <= 65535)) return { error: "SMTP port noto'g'ri" };
+    out.port = port;
+  }
+  if (out.host && !/^[A-Za-z0-9.-]{1,200}$/.test(out.host)) return { error: "SMTP server manzili noto'g'ri" };
+
+  const newPass = typeof input.pass === 'string' ? input.pass.trim() : '';
+  const serverChanged = (out.host || '') !== (prev.host || '') || (out.user || '') !== (prev.user || '');
+  if (newPass) out.pass = newPass;
+  else if (input.clearPass === true || serverChanged) delete out.pass;
+
+  delete out.hasPassword;
+  return { email: out };
 }
 
 // Telegram HTML parse_mode uchun matnni xavfsiz qilish
@@ -824,12 +856,23 @@ function startBackupScheduler() {
 async function sendEmailMessage({ to, subject, message, html, smtpConfig }) {
   const settings = await getSettingsFromDb();
   const dbEmailCfg = (settings && settings.email) ? settings.email : {};
-  const emailCfg = (smtpConfig && smtpConfig.host) ? smtpConfig : dbEmailCfg;
+  // Asosiy manba — serverda saqlangan sozlamalar. Admin paneldan kelgan (hali saqlanmagan) qiymatlar
+  // ularni almashtirishi mumkin, masalan "Test" tugmasi uchun. Saqlangan parol esa faqat saqlangan
+  // server va login bilan ishlatiladi: begona serverga parolni yuborttirib bo'lmaydi.
+  const reqCfg = (smtpConfig && typeof smtpConfig === 'object') ? smtpConfig : {};
+  const given = (k) => reqCfg[k] !== undefined && String(reqCfg[k]).trim() !== '';
+  const emailCfg = { ...dbEmailCfg };
+  for (const k of ['host', 'port', 'user', 'senderName', 'fromEmail']) {
+    if (given(k)) emailCfg[k] = String(reqCfg[k]).trim();
+  }
+  const sameAccount = (emailCfg.host || '') === (dbEmailCfg.host || '') && (emailCfg.user || '') === (dbEmailCfg.user || '');
+  emailCfg.pass = given('pass') ? String(reqCfg.pass).trim() : (sameAccount ? dbEmailCfg.pass : undefined);
 
   const host = emailCfg.host || emailCfg.smtpHost || process.env.SMTP_HOST;
   const port = parseInt(emailCfg.port || emailCfg.smtpPort || process.env.SMTP_PORT || "587", 10);
   const user = emailCfg.user || emailCfg.smtpUser || process.env.SMTP_USER;
-  const pass = emailCfg.pass || emailCfg.smtpPass || process.env.SMTP_PASS;
+  // Eski nomli (smtpPass) va muhit o'zgaruvchisidagi parol ham faqat saqlangan server bilan ishlatiladi
+  const pass = emailCfg.pass || (sameAccount ? (emailCfg.smtpPass || process.env.SMTP_PASS) : undefined);
   const senderName = emailCfg.senderName || process.env.SMTP_SENDER_NAME || "Aureon Travel";
   const fromEmail = emailCfg.fromEmail || emailCfg.user || emailCfg.smtpUser || process.env.SMTP_FROM || user;
   const isEnabled = emailCfg.enabled !== false;
@@ -1223,6 +1266,16 @@ try {
     const newSettings = { ...(req.body || {}) };
     // Parol bu yerdan o'zgartirilmaydi (ADMIN_PASSWORD muhit o'zgaruvchisi orqali)
     delete newSettings.adminPassword;
+    delete newSettings.lastAutoBackupAt;
+    if (newSettings.email !== undefined) {
+      if (!newSettings.email || typeof newSettings.email !== 'object') {
+        return res.status(400).json({ error: "Email sozlamalari noto'g'ri" });
+      }
+      const current = await getSettingsFromDb();
+      const merged = mergeEmailConfig(newSettings.email, current.email);
+      if (merged.error) return res.status(400).json({ error: merged.error });
+      newSettings.email = merged.email;
+    }
     const updated = await saveSettingsToDb(newSettings);
     res.json({ success: true, settings: withoutSecrets(updated) });
   });
@@ -1441,7 +1494,7 @@ module.exports = {
   isPgReady: () => isPgConnected,
   _internal: {
     sanitizePublicBooking, validateTour, priceBooking, maskName, csvCell, bookingsToCsv,
-    generateBookingId, createAdminToken, verifyAdminToken, escapeTgHtml, withoutSecrets,
+    generateBookingId, createAdminToken, verifyAdminToken, escapeTgHtml, withoutSecrets, mergeEmailConfig,
     buildBackup, sendBackupToTelegram, SESSION_TTL_MS
   }
 };

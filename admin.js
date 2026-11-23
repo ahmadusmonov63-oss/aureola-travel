@@ -1684,16 +1684,8 @@ let emailConfig = {
 };
 
 function setupEmailConfig() {
-  try {
-    const raw = localStorage.getItem("aureon_email_config");
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      emailConfig = { ...emailConfig, ...parsed };
-    }
-  } catch (e) {
-    console.error("Failed to parse email config", e);
-  }
-
+  // Email (SMTP) sozlamalari endi serverda saqlanadi (har qanday qurilmadan bir xil).
+  // Parol brauzerga qaytarilmaydi: maydon bo'sh turadi, "saqlangan" belgisi ko'rsatiladi.
   // Populate inputs in settings tab
   const hostInp = document.getElementById("smtp-host");
   const portInp = document.getElementById("smtp-port");
@@ -1702,12 +1694,7 @@ function setupEmailConfig() {
   const senderInp = document.getElementById("smtp-sender-name");
   const testInp = document.getElementById("smtp-test-email");
 
-  if (hostInp && emailConfig.host) hostInp.value = emailConfig.host;
-  if (portInp && emailConfig.port) portInp.value = emailConfig.port;
-  if (userInp && emailConfig.user) userInp.value = emailConfig.user;
-  if (passInp && emailConfig.pass) passInp.value = emailConfig.pass;
-  if (senderInp && emailConfig.senderName) senderInp.value = emailConfig.senderName;
-  if (testInp && emailConfig.testEmail) testInp.value = emailConfig.testEmail;
+  loadEmailConfigFromServer();
 
   // Realtime autosave listeners
   [hostInp, portInp, userInp, passInp, senderInp, testInp].forEach(el => {
@@ -1735,31 +1722,103 @@ function autoSaveEmailInputs() {
   const senderName = document.getElementById("smtp-sender-name")?.value.trim() || "Aureon Travel";
   const testEmail = document.getElementById("smtp-test-email")?.value.trim() || "";
 
-  emailConfig = { host, port, user, pass, senderName, testEmail };
-  try {
-    localStorage.setItem("aureon_email_config", JSON.stringify(emailConfig));
-  } catch (e) {}
+  // Faqat xotirada: serverga "Saqlash" tugmasi bilan yuboriladi (handleSaveEmailConfig)
+  emailConfig = { ...emailConfig, host, port, user, pass, senderName, testEmail };
+}
 
-  const indicator = document.getElementById("email-autosave-indicator");
-  if (indicator) {
-    indicator.classList.remove("opacity-0");
-    indicator.classList.add("opacity-100");
-    setTimeout(() => {
-      indicator.classList.remove("opacity-100");
-      indicator.classList.add("opacity-0");
-    }, 2000);
+// Formadagi qiymatlarni maydonlarga joylash (parol maydoni doim bo'sh qoladi)
+function fillEmailForm(cfg) {
+  const set = (id, v) => { const el = document.getElementById(id); if (el && v !== undefined && v !== null && v !== "") el.value = v; };
+  set("smtp-host", cfg.host);
+  set("smtp-port", cfg.port);
+  set("smtp-user", cfg.user);
+  set("smtp-sender-name", cfg.senderName);
+  set("smtp-test-email", cfg.testEmail);
+  const passInp = document.getElementById("smtp-pass");
+  if (passInp) {
+    passInp.value = "";
+    passInp.placeholder = cfg.hasPassword
+      ? "Saqlangan ✓ (o'zgartirish uchun yangisini kiriting)"
+      : "••••••••••••••••";
   }
 }
 
-function handleSaveEmailConfig(e) {
+// Serverga email sozlamalarini yuborish. Parol bo'sh bo'lsa, serverdagi saqlangan parol o'zgarmaydi.
+async function saveEmailConfigToServer(cfg) {
+  const api = getApiUrl("/api/settings");
+  if (!api) return { ok: false, error: "Server ulanmagan" };
+  const res = await fetch(api, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      email: {
+        host: cfg.host, port: cfg.port, user: cfg.user, pass: cfg.pass || "",
+        senderName: cfg.senderName, testEmail: cfg.testEmail
+      }
+    })
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) return { ok: false, error: data.error || `Server xatosi (${res.status})` };
+  return { ok: true, email: (data.settings && data.settings.email) || {} };
+}
+
+async function loadEmailConfigFromServer() {
+  const api = getApiUrl("/api/settings/admin");
+  if (!api) return;
+  let serverEmail = {};
+  try {
+    const res = await fetch(api);
+    if (!res.ok) return; // login qilinmagan bo'lsa — login oynasi ochiladi
+    serverEmail = (await res.json()).email || {};
+  } catch (e) {
+    return;
+  }
+
+  // Bir martalik ko'chirish: eski versiya sozlamalarni (parol bilan) faqat shu brauzerda saqlardi
+  let legacy = null;
+  try { legacy = JSON.parse(localStorage.getItem("aureon_email_config") || "null"); } catch (e) {}
+  if (legacy && legacy.host && legacy.pass && !serverEmail.hasPassword) {
+    const result = await saveEmailConfigToServer(legacy);
+    if (result.ok) {
+      serverEmail = result.email;
+      console.log("Email sozlamalari brauzerdan serverga ko'chirildi");
+    }
+  }
+  if (legacy && (serverEmail.hasPassword || !legacy.pass)) {
+    try { localStorage.removeItem("aureon_email_config"); } catch (e) {}
+  }
+
+  emailConfig = { ...emailConfig, ...serverEmail, pass: "" };
+  fillEmailForm(emailConfig);
+}
+
+async function handleSaveEmailConfig(e) {
   if (e) e.preventDefault();
   autoSaveEmailInputs();
 
   const resDiv = document.getElementById("email-test-result");
-  if (resDiv) {
-    resDiv.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block";
-    resDiv.innerHTML = '<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Email (SMTP) sozlamalari muvaffaqiyatli saqlandi!';
-    setTimeout(() => { resDiv.classList.add("hidden"); }, 4000);
+  const show = (ok, html) => {
+    if (!resDiv) return;
+    resDiv.className = ok
+      ? "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200 block"
+      : "p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200 block";
+    resDiv.innerHTML = html;
+  };
+
+  try {
+    const result = await saveEmailConfigToServer(emailConfig);
+    if (!result.ok) {
+      show(false, `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1.5"></i> Saqlanmadi: ${result.error}`);
+      return;
+    }
+    emailConfig = { ...emailConfig, ...result.email, pass: "" };
+    fillEmailForm(emailConfig);
+    show(true, result.email.hasPassword
+      ? '<i class="fa-solid fa-circle-check text-emerald-600 mr-1.5"></i> Email (SMTP) sozlamalari serverda saqlandi — endi istalgan qurilmadan ishlaydi.'
+      : '<i class="fa-solid fa-circle-exclamation text-amber-600 mr-1.5"></i> Saqlandi, lekin parol kiritilmagan. Server yoki login o\'zgarsa, parolni qayta kiriting.');
+    setTimeout(() => { resDiv && resDiv.classList.add("hidden"); }, 6000);
+  } catch (err) {
+    show(false, `<i class="fa-solid fa-circle-xmark text-rose-600 mr-1.5"></i> Serverga ulanib bo'lmadi: ${err.message}`);
   }
 }
 
