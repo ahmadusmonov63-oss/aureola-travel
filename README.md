@@ -97,3 +97,20 @@ Render'ning bepul serverida fayllar **vaqtinchalik**: har deploy, qayta ishga tu
 - `DATABASE_URL` berilgan bo'lsa, server faqat PostgreSQL bilan ishlaydi. Baza ulanmasa, server 5 marta urinib ko'radi va ishga tushmaydi (Render loglarida sababi ko'rinadi). Buyurtmalar jimgina vaqtinchalik faylga yozilib yo'qolmaydi.
 - Baza vaqtincha javob bermasa, mijoz va admin "saqlandi" emas, xato xabarini ko'radi.
 - Qo'shimcha sozlamalar: `DATABASE_POOL_MAX` (standart 5 ta ulanish), `DATABASE_SSL=false` (SSL siz lokal PostgreSQL uchun; `localhost` uchun avtomatik).
+
+### 💤 Supabase va Render uxlab qolmasligi uchun (UptimeRobot)
+
+- Supabase bepul loyihani **7 kun faolsiz** qolsa to'xtatadi. Shunda Render serveri qayta ishga tushganda bazaga ulana olmaydi va sayt ishlamay qoladi.
+- Render bepul serveri **15 daqiqa** so'rov bo'lmasa uxlaydi, keyingi birinchi ochilish ~50 soniya kutadi.
+
+`/api/status` har so'ralganda bazaga kichik so'rov (`SELECT 1`) yuboradi. Uni muntazam so'rab turish ikkala muammoni ham hal qiladi:
+
+1. **[uptimerobot.com](https://uptimerobot.com)** da bepul ro'yxatdan o'ting.
+2. **New monitor** → turi **HTTP(s)**.
+3. **URL:** `https://aureon-travel.onrender.com/api/status`
+4. **Monitoring interval:** 5 daqiqa (bepul tarifdagi eng kichik qiymat).
+5. Ogohlantirish uchun emailingizni belgilang va saqlang.
+
+Baza javob bermasa `/api/status` **503** qaytaradi va UptimeRobot sizga darhol xabar yuboradi. Bunday xabar kelsa, avval Supabase'da loyiha **Paused** bo'lib qolmaganini tekshiring.
+
+> ℹ️ Render bepul tarifida oyiga 750 soat beriladi. Bitta servis doimiy uyg'oq tursa ~720–744 soat sarflaydi, bu limitga sig'adi. Lekin shu hisobda boshqa bepul servislar bo'lsa, limit yetmay qolishi mumkin.

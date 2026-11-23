@@ -195,6 +195,7 @@ function getPgPool() {
         ssl: useSsl ? { rejectUnauthorized: false } : false,
         connectionTimeoutMillis: 10000,
         idleTimeoutMillis: 30000,
+        query_timeout: 15000, // osilib qolgan so'rov ulanishni cheksiz band qilmasin
         max: parseInt(process.env.DATABASE_POOL_MAX || '5', 10) // Supabase bepul tarifida ulanishlar cheklangan
       });
 
@@ -762,14 +763,36 @@ try {
   });
 
   // 1. Health check & status
-  app.get('/api/status', (req, res) => {
-    res.json({
+  // Health check. PostgreSQL rejimida bazaga haqiqiy so'rov (SELECT 1) yuboradi:
+  // - tashqi monitor (UptimeRobot) uni muntazam so'rab tursa, Supabase bepul loyihasi
+  //   "faolsiz" deb to'xtatilmaydi, Render serveri ham uxlab qolmaydi;
+  // - baza javob bermasa 503 qaytadi, monitor buni darhol xabar qiladi.
+  app.get('/api/status', async (req, res) => {
+    const body = {
       status: "ok",
       app: "Aureon Travel Backend",
       database: isPgConnected ? "PostgreSQL (Supabase)" : "Local JSON (db.json)",
       persistent: isPgConnected || !process.env.RENDER,
       time: new Date().toISOString()
-    });
+    };
+    res.set('Cache-Control', 'no-store');
+
+    const pool = pg();
+    if (pool) {
+      const started = Date.now();
+      try {
+        await Promise.race([
+          pool.query('SELECT 1'),
+          new Promise((_, reject) => setTimeout(() => reject(new Error("5 soniyada javob bermadi")), 5000))
+        ]);
+        body.databaseOk = true;
+        body.databaseLatencyMs = Date.now() - started;
+      } catch (err) {
+        console.error("❌ Health check: baza javob bermadi:", err.message);
+        return res.status(503).json({ ...body, status: "error", databaseOk: false });
+      }
+    }
+    res.json(body);
   });
 
   // 2. TURLAR
