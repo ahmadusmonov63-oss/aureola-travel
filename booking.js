@@ -1180,33 +1180,17 @@ function calculateBookingPrice() {
   if (!tour) return;
 
   const dict = UI_STRINGS[currentLang] || UI_STRINGS.uz;
-  const nights = Math.max(0, selectedDuration - 1);
-
-  // 1. Asosiy tur narxi (Kattalar to'liq, bolalar 50% narxda, kunlar koeffitsiyenti bilan)
-  let dayFactor = 1;
-  if (selectedDuration === 2) dayFactor = 1.85;
-  if (selectedDuration === 3) dayFactor = 2.65;
-  if (selectedDuration === 4) dayFactor = 3.4;
-
-  const basePricePerPerson = tour.basePricePerPerson || 350000;
-  const personBase = (adultsCount * basePricePerPerson) + (childrenCount * basePricePerPerson * 0.5);
-  const baseTotal = Math.round(personBase * dayFactor);
-
-  // 2. Mehmonxona narxi (Kechalar soni va xonalar hisobi: 2 kishiga 1 xona)
-  const hotelPricePerNight = tour.hotelPricePerNight || 450000;
-  const roomsCount = Math.ceil((adultsCount + childrenCount) / 2);
-  const hotelTotal = (hotelOption === "with-hotel" && nights > 0)
-    ? (hotelPricePerNight * nights * roomsCount)
-    : 0;
-
-  // 3. Gid xizmati narxi (Kunlar soni bo'yicha)
-  const guidePricePerDay = tour.guidePricePerDay || 200000;
-  const guideTotal = (guideOption === "with-guide")
-    ? (guidePricePerDay * selectedDuration)
-    : 0;
-
-  // 4. Jami
-  const grandTotal = baseTotal + hotelTotal + guideTotal;
+  // Narx formulasi pricing.js da (server ham aynan shu faylni ishlatadi)
+  const {
+    nights, baseTotal, hotelTotal, guideTotal,
+    hotelPricePerNight, guidePricePerDay, totalPrice: grandTotal
+  } = AureonPricing.calculate(tour, {
+    durationDays: selectedDuration,
+    adults: adultsCount,
+    children: childrenCount,
+    withHotel: hotelOption === "with-hotel",
+    withGuide: guideOption === "with-guide"
+  });
 
   // Xulosa kartochkasini yangilash
   const imgEl = document.getElementById("summary-tour-img");

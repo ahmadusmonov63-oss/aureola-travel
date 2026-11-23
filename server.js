@@ -8,10 +8,12 @@ const path = require('path');
 const http = require('http');
 const https = require('https');
 const crypto = require('crypto');
+const pricing = require('./pricing');
 
 const PORT = process.env.PORT || 3000;
 const SEED_FILE = path.join(__dirname, 'data', 'db.json');
-const DB_FILE = path.join(__dirname, 'data', 'db.local.json');
+// Ish vaqtidagi lokal ma'lumot papkasi. DATA_DIR bilan o'zgartirish mumkin (testlar vaqtinchalik papka ishlatadi).
+const DB_FILE = path.join(process.env.DATA_DIR || path.join(__dirname, 'data'), 'db.local.json');
 
 // --- 0. XAVFSIZLIK YORDAMCHILARI ---
 const DEFAULT_ADMIN_PASSWORD = "admin";
@@ -23,7 +25,7 @@ const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32
 // Brauzerga ochiq beriladigan fayllar. Qolganlari (data/db.json, server.js, ...) yopiq.
 const PUBLIC_FILES = new Set([
   'index.html', 'booking.html', 'admin.html',
-  'app.js', 'booking.js', 'admin.js', 'data.js', 'styles.css'
+  'app.js', 'booking.js', 'admin.js', 'data.js', 'pricing.js', 'styles.css'
 ]);
 
 function sha256(value) {
@@ -589,30 +591,6 @@ function toInt(value) {
   return Number.isInteger(n) ? n : NaN;
 }
 
-// booking.js dagi calculateBookingPrice() bilan aynan bir xil formula.
-// Ikkalasini birga o'zgartiring, aks holda mijoz ko'rgan narx bilan saqlangan narx farq qiladi.
-function calculateTourPrice(tour, { durationDays, adults, children, withHotel, withGuide }) {
-  const nights = Math.max(0, durationDays - 1);
-
-  let dayFactor = 1;
-  if (durationDays === 2) dayFactor = 1.85;
-  if (durationDays === 3) dayFactor = 2.65;
-  if (durationDays === 4) dayFactor = 3.4;
-
-  const basePricePerPerson = tour.basePricePerPerson || 350000;
-  const personBase = (adults * basePricePerPerson) + (children * basePricePerPerson * 0.5);
-  const baseTotal = Math.round(personBase * dayFactor);
-
-  const hotelPricePerNight = tour.hotelPricePerNight || 450000;
-  const roomsCount = Math.ceil((adults + children) / 2);
-  const hotelTotal = (withHotel && nights > 0) ? (hotelPricePerNight * nights * roomsCount) : 0;
-
-  const guidePricePerDay = tour.guidePricePerDay || 200000;
-  const guideTotal = withGuide ? (guidePricePerDay * durationDays) : 0;
-
-  return { nights, totalPrice: baseTotal + hotelTotal + guideTotal };
-}
-
 // Buyurtmadagi tur va parametrlarni tekshirib, narxni serverda qayta hisoblaydi.
 // Xato bo'lsa { error } qaytaradi.
 async function priceBooking(data) {
@@ -630,7 +608,8 @@ async function priceBooking(data) {
 
   const withHotel = data.hotelOption === "Otel bilan";
   const withGuide = data.guideOption === "Gid bilan";
-  const { nights, totalPrice } = calculateTourPrice(tour, { durationDays, adults, children, withHotel, withGuide });
+  // Brauzer (booking.js) ham aynan shu pricing.js formulasini ishlatadi
+  const { nights, totalPrice } = pricing.calculate(tour, { durationDays, adults, children, withHotel, withGuide });
 
   const title = tour.title && typeof tour.title === 'object' ? (tour.title.uz || '') : (tour.title || '');
   return { tour, durationDays, adults, children, nights, totalPrice, tourTitle: title };
@@ -1428,8 +1407,8 @@ try {
   console.log("Express moduli topilmadi:", e.message);
 }
 
-// 6. Serverni ishga tushirish
-if (app) {
+// 6. Serverni ishga tushirish (faqat `node server.js` bilan; testlar require() qilganda ishga tushmaydi)
+if (app && require.main === module) {
   initDatabaseWithRetry().then(() => {
     startBackupScheduler();
     app.listen(PORT, '0.0.0.0', () => {
@@ -1454,3 +1433,15 @@ if (app) {
     });
   });
 }
+
+// Testlar uchun eksport (test/ papkasiga qarang)
+module.exports = {
+  app,
+  initDatabaseWithRetry,
+  isPgReady: () => isPgConnected,
+  _internal: {
+    sanitizePublicBooking, validateTour, priceBooking, maskName, csvCell, bookingsToCsv,
+    generateBookingId, createAdminToken, verifyAdminToken, escapeTgHtml, withoutSecrets,
+    buildBackup, sendBackupToTelegram, SESSION_TTL_MS
+  }
+};

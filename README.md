@@ -44,6 +44,14 @@ npm start
 
 Node.js 22 kerak (Render ham shu versiyani ishlatadi, `package.json` dagi `engines`); yangiroq versiyalarda ham ishlaydi. Lokal rejimda buyurtmalar `data/db.local.json` fayliga yoziladi (u git'ga kirmaydi). `data/db.json` faqat boshlang'ich turlar va sozlamalar uchun.
 
+**Testlar:** `npm test` — 60 ta avtomatik test (taxminan 5 soniya):
+- `test/pricing.test.js` — narx formulasi (`pricing.js`; brauzer va server aynan shu faylni ishlatadi) va turlar ma'lumoti;
+- `test/security.test.js` — XSS tozalash, admin token, CSV, buyurtma ID;
+- `test/api.test.js` — haqiqiy server: himoya, buyurtma, narx, cheklovlar, turlar, zaxira/tiklash (lokal JSON rejimi);
+- `test/api-pg.test.js` — xuddi shu narsalar PostgreSQL rejimida (`pg-mem` xotiradagi baza bilan, Supabase kerak emas).
+
+Testlar vaqtinchalik papkada ishlaydi va sizning lokal ma'lumotlaringizga tegmaydi. GitHub'ga har push qilinganda ular avtomatik ishlaydi (**Actions** bo'limi). O'zgartirish kiritgandan keyin, commit qilishdan oldin `npm test` ni ishga tushiring.
+
 **Dizaynni o'zgartirganda:** sahifalar oldindan yig'ilgan `styles.css` dan foydalanadi (Tailwind CDN emas). HTML yoki JS ga yangi Tailwind klass qo'shsangiz, `npm run build:css` ni ishga tushirib, `styles.css` ni ham commit qiling. Sozlamalar: `tailwind.config.js`.
 
 **Email (SMTP):** server sertifikati tekshiriladi. Faqat o'z-o'zidan imzolangan sertifikatli shaxsiy SMTP server uchun `SMTP_ALLOW_SELF_SIGNED=true` o'rnating.
