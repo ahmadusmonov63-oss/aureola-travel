@@ -76,6 +76,12 @@
           <span id="telegram-status-text">Bot: Tekshirilmoqda</span>
         </div>
 
+        <!-- Chiqish tugmasi -->
+        <button type="button" onclick="adminLogout()" class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-bold bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition-all" title="Admin paneldan chiqish">
+          <i class="fa-solid fa-right-from-bracket text-xs"></i>
+          <span class="hidden sm:inline">Chiqish</span>
+        </button>
+
         <!-- Asosiy saytga o'tish tugmasi -->
         <a href="index.html" class="flex items-center gap-1.5 px-2.5 sm:px-3.5 py-1.5 rounded-full text-xs font-bold bg-amber-500 hover:bg-amber-400 text-slate-950 transition-all shadow-sm" title="Mijozlar ko'radigan saytga o'tish">
           <i class="fa-solid fa-globe text-xs"></i>
@@ -1049,6 +1055,147 @@
 
     </div>
   </div>
+
+  <!-- ADMIN LOGIN OYNASI -->
+  <div id="admin-login-overlay" class="hidden fixed inset-0 z-[100] bg-slate-900 flex items-center justify-center p-4">
+    <form id="admin-login-form" class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 sm:p-8 space-y-5">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-brand-600 to-amber-500 text-white flex items-center justify-center shadow">
+          <i class="fa-solid fa-lock"></i>
+        </div>
+        <div>
+          <span class="text-[10px] uppercase tracking-widest text-amber-600 font-bold block">Aureon Travel</span>
+          <h2 class="text-lg font-bold text-slate-900 leading-tight">Admin panelga kirish</h2>
+        </div>
+      </div>
+      <label class="block">
+        <span class="text-xs font-semibold text-slate-600">Parol</span>
+        <input type="password" id="admin-login-password" autocomplete="current-password" required
+          class="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-amber-500">
+      </label>
+      <p id="admin-login-error" class="hidden text-xs font-semibold text-rose-600"></p>
+      <button type="submit" id="admin-login-submit"
+        class="w-full rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold py-2.5 transition-all">
+        <i class="fa-solid fa-right-to-bracket mr-1.5"></i> Kirish
+      </button>
+      <a href="index.html" class="block text-center text-xs text-slate-500 hover:underline">Saytga qaytish</a>
+    </form>
+  </div>
+
+  <!-- Admin autentifikatsiyasi: barcha /api/ so'rovlariga tokenni qo'shadi, 401 da login oynasini ochadi -->
+  <script>
+    (function () {
+      var TOKEN_KEY = "aureon_admin_token";
+      var BACKEND_KEY = "aureon_backend_api_url"; // data.js dagi STORAGE_KEYS.BACKEND_URL bilan bir xil
+      var originalFetch = window.fetch.bind(window);
+
+      function getToken() {
+        try { return sessionStorage.getItem(TOKEN_KEY) || ""; } catch (e) { return ""; }
+      }
+      function setToken(token) {
+        try {
+          if (token) sessionStorage.setItem(TOKEN_KEY, token);
+          else sessionStorage.removeItem(TOKEN_KEY);
+        } catch (e) {}
+      }
+      function backendBase() {
+        try { return localStorage.getItem(BACKEND_KEY) || ""; } catch (e) { return ""; }
+      }
+      function apiUrl(endpoint) {
+        var base = backendBase();
+        return base ? base.replace(/\/$/, "") + endpoint : endpoint;
+      }
+      function isOwnApi(url) {
+        try {
+          var u = new URL(url, location.href);
+          if (u.pathname.indexOf("/api/") !== 0) return false;
+          if (u.origin === location.origin) return true;
+          var base = backendBase();
+          return !!base && new URL(base, location.href).origin === u.origin;
+        } catch (e) {
+          return false;
+        }
+      }
+
+      function showLogin(message) {
+        var overlay = document.getElementById("admin-login-overlay");
+        var err = document.getElementById("admin-login-error");
+        if (!overlay) return;
+        // Sahifadagi boshqa modallar ichida qolib ketmasligi uchun to'g'ridan-to'g'ri body ga ko'chiramiz
+        if (overlay.parentElement !== document.body) document.body.appendChild(overlay);
+        overlay.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+        if (err) {
+          err.textContent = message || "";
+          err.classList.toggle("hidden", !message);
+        }
+        var input = document.getElementById("admin-login-password");
+        if (input) setTimeout(function () { input.focus(); }, 50);
+      }
+
+      window.fetch = function (input, init) {
+        var url = typeof input === "string" ? input : (input && input.url) || String(input);
+        if (!isOwnApi(url) || /\/api\/admin\/login$/.test(new URL(url, location.href).pathname)) {
+          return originalFetch(input, init);
+        }
+        var opts = Object.assign({}, init || {});
+        var headers = new Headers(opts.headers || (input instanceof Request ? input.headers : undefined));
+        var token = getToken();
+        if (token) headers.set("Authorization", "Bearer " + token);
+        opts.headers = headers;
+        return originalFetch(input, opts).then(function (res) {
+          if (res.status === 401) {
+            var hadToken = !!getToken();
+            setToken("");
+            showLogin(hadToken ? "Sessiya muddati tugadi. Iltimos, qaytadan kiring." : "");
+          }
+          return res;
+        });
+      };
+
+      window.adminLogout = function () {
+        setToken("");
+        location.reload();
+      };
+
+      document.addEventListener("DOMContentLoaded", function () {
+        // Fayl sifatida (file://) serversiz ochilganda ma'lumotlar faqat shu brauzerda — login kerak emas
+        var serverless = !/^https?:$/.test(location.protocol) && !backendBase();
+        if (serverless) return;
+        if (!getToken()) showLogin("");
+
+        var form = document.getElementById("admin-login-form");
+        form.addEventListener("submit", function (e) {
+          e.preventDefault();
+          var input = document.getElementById("admin-login-password");
+          var btn = document.getElementById("admin-login-submit");
+          btn.disabled = true;
+          originalFetch(apiUrl("/api/admin/login"), {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password: input.value })
+          })
+            .then(function (res) {
+              return res.json().catch(function () { return {}; }).then(function (data) {
+                if (res.ok && data.token) {
+                  setToken(data.token);
+                  location.reload();
+                } else {
+                  input.value = "";
+                  showLogin(data.error || "Kirishda xatolik yuz berdi.");
+                }
+              });
+            })
+            .catch(function () {
+              showLogin("Serverga ulanib bo'lmadi. Server ishga tushirilganini tekshiring.");
+            })
+            .finally(function () {
+              btn.disabled = false;
+            });
+        });
+      });
+    })();
+  </script>
 
   <!-- Scripts (v4.0 - Ko'p tilli & Dual Valyuta) -->
   <script src="data.js?v=4.0"></script>

@@ -62,7 +62,12 @@ Saytni istalgan qurilmadan (telefon, planshet) ishlatish uchun:
    - **Environment:** `Node`
    - **Build Command:** `npm install`
    - **Start Command:** `node server.js`
-4. **Deploy** tugmasini bosing. 
+   - **Environment Variables:** `ADMIN_PASSWORD` = kuchli parol (majburiy). Ixtiyoriy: `ADMIN_SESSION_SECRET` = uzun tasodifiy satr (server qayta ishga tushganda admin sessiyasi saqlanib qolishi uchun).
+4. **Deploy** tugmasini bosing.
+
+> 🔐 **Xavfsizlik:** Admin panel parol bilan himoyalangan. Standart `admin` paroli bilan faqat shu kompyuterdan (`localhost`) kirish mumkin. Internet orqali kirish uchun `ADMIN_PASSWORD` o'rnatilishi shart. 15 daqiqada 5 marta noto'g'ri urinishdan keyin kirish vaqtincha bloklanadi.
+>
+> ⚠️ `server.rb` (Ruby) serverida bu himoyalar **yo'q**. Uni faqat lokal sinov uchun ishlating. 
 5. 1 daqiqada sizga doimiy ishlaydigan online manzil beriladi (masalan: `https://aureon-travel.onrender.com`).
    - Mehmonlar sayti: `https://aureon-travel.onrender.com/`
    - Siz uchun admin: `https://aureon-travel.onrender.com/admin.html`

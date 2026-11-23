@@ -7,9 +7,138 @@ const fs = require('fs');
 const path = require('path');
 const http = require('http');
 const https = require('https');
+const crypto = require('crypto');
 
 const PORT = process.env.PORT || 3000;
 const DB_FILE = path.join(__dirname, 'data', 'db.json');
+
+// --- 0. XAVFSIZLIK YORDAMCHILARI ---
+const DEFAULT_ADMIN_PASSWORD = "admin";
+const SESSION_TTL_MS = 12 * 60 * 60 * 1000; // 12 soat
+// Token imzolash kaliti. ADMIN_SESSION_SECRET berilmasa, har ishga tushishda yangisi yaratiladi
+// (server qayta ishga tushganda admin qaytadan kiradi).
+const SESSION_SECRET = process.env.ADMIN_SESSION_SECRET || crypto.randomBytes(32).toString('hex');
+
+// Brauzerga ochiq beriladigan fayllar. Qolganlari (data/db.json, server.js, ...) yopiq.
+const PUBLIC_FILES = new Set([
+  'index.html', 'booking.html', 'admin.html',
+  'app.js', 'booking.js', 'admin.js', 'data.js'
+]);
+
+function sha256(value) {
+  return crypto.createHash('sha256').update(String(value)).digest();
+}
+
+function safeEqual(a, b) {
+  return crypto.timingSafeEqual(sha256(a), sha256(b));
+}
+
+function signPayload(payload) {
+  return crypto.createHmac('sha256', SESSION_SECRET).update(payload).digest('hex');
+}
+
+function createAdminToken() {
+  const payload = `${Date.now() + SESSION_TTL_MS}.${crypto.randomBytes(8).toString('hex')}`;
+  return `${payload}.${signPayload(payload)}`;
+}
+
+function verifyAdminToken(token) {
+  if (typeof token !== 'string') return false;
+  const lastDot = token.lastIndexOf('.');
+  if (lastDot <= 0) return false;
+  const payload = token.slice(0, lastDot);
+  const sig = token.slice(lastDot + 1);
+  if (!safeEqual(sig, signPayload(payload))) return false;
+  const exp = parseInt(payload.split('.')[0], 10);
+  return Number.isFinite(exp) && exp > Date.now();
+}
+
+function requireAdmin(req, res, next) {
+  const match = (req.headers.authorization || '').match(/^Bearer\s+(.+)$/i);
+  if (match && verifyAdminToken(match[1].trim())) return next();
+  res.status(401).json({ error: "Avtorizatsiya talab qilinadi. Admin panelga qaytadan kiring.", authRequired: true });
+}
+
+// Proksi (Render, ngrok) orqali kelgan so'rov hech qachon "lokal" hisoblanmaydi
+function isLocalRequest(req) {
+  if (req.headers['x-forwarded-for']) return false;
+  const addr = (req.socket && req.socket.remoteAddress) || '';
+  return addr === '127.0.0.1' || addr === '::1' || addr === '::ffff:127.0.0.1';
+}
+
+// Mijoz IP manzili: proksi qo'shgan oxirgi X-Forwarded-For qiymati, bo'lmasa to'g'ridan-to'g'ri ulanish
+function getClientIp(req) {
+  const xff = req.headers['x-forwarded-for'];
+  if (xff) {
+    const parts = String(xff).split(',').map(s => s.trim()).filter(Boolean);
+    if (parts.length) return parts[parts.length - 1];
+  }
+  return (req.socket && req.socket.remoteAddress) || 'unknown';
+}
+
+// Login urinishlarini cheklash: 15 daqiqada IP boshiga 5 ta xato urinish
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_FAILS = 5;
+const loginFailures = new Map();
+
+function isLoginBlocked(ip) {
+  const entry = loginFailures.get(ip);
+  if (!entry) return false;
+  if (Date.now() - entry.first > LOGIN_WINDOW_MS) {
+    loginFailures.delete(ip);
+    return false;
+  }
+  return entry.count >= LOGIN_MAX_FAILS;
+}
+
+function recordLoginFailure(ip) {
+  const entry = loginFailures.get(ip);
+  if (!entry || Date.now() - entry.first > LOGIN_WINDOW_MS) {
+    loginFailures.set(ip, { count: 1, first: Date.now() });
+  } else {
+    entry.count += 1;
+  }
+}
+
+// Sozlamalardan maxfiy maydonlarni olib tashlash (javobga chiqarmaslik uchun)
+function withoutSecrets(settings) {
+  const { adminPassword, ...rest } = settings || {};
+  return rest;
+}
+
+// Telegram HTML parse_mode uchun matnni xavfsiz qilish
+function escapeTgHtml(value) {
+  return String(value === undefined || value === null ? '' : value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+}
+
+// Ommaviy formadan kelgan buyurtma: faqat oddiy qiymatlar, HTML/atribut buzadigan belgilarsiz.
+// Bu admin panelda XSS (mijoz ismiga yozilgan <script> va h.k.) bajarilishining oldini oladi.
+function sanitizePublicBooking(data) {
+  const clean = {};
+  for (const [key, value] of Object.entries(data || {})) {
+    if (!/^[A-Za-z][A-Za-z0-9_]{0,40}$/.test(key)) continue;
+    if (typeof value === 'string') {
+      clean[key] = value.replace(/[<>"`]/g, '').slice(0, 2000);
+    } else if (typeof value === 'number' && Number.isFinite(value)) {
+      clean[key] = value;
+    } else if (typeof value === 'boolean') {
+      clean[key] = value;
+    }
+  }
+  return clean;
+}
+
+function generateBookingId(existing) {
+  const ids = new Set(existing.map(b => b.id));
+  let id;
+  do {
+    id = `BK-${crypto.randomInt(100000, 1000000)}`;
+  } while (ids.has(id));
+  return id;
+}
 
 // --- 1. LOKAL MA'LUMOTLAR BAZASI (Fallback zaxira) ---
 function readDb() {
@@ -467,8 +596,13 @@ try {
   app.use(express.json({ limit: '10mb' }));
   app.use(express.urlencoded({ extended: true }));
 
-  // Statik fayllarni tarqatish
-  app.use(express.static(__dirname));
+  // Statik fayllarni tarqatish: faqat ruxsat berilgan sahifa va skriptlar.
+  // (Avval butun papka ochiq edi va /data/db.json parol va tokenlar bilan yuklab olinardi.)
+  app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+  app.get('/:file', (req, res, next) => {
+    if (!PUBLIC_FILES.has(req.params.file)) return next();
+    res.sendFile(path.join(__dirname, req.params.file));
+  });
 
   // 1. Health check & status
   app.get('/api/status', (req, res) => {
@@ -493,7 +627,7 @@ try {
     res.json(tour);
   });
 
-  app.post('/api/tours', async (req, res) => {
+  app.post('/api/tours', requireAdmin, async (req, res) => {
     const tourData = req.body;
     if (!tourData || !tourData.id) {
       return res.status(400).json({ error: "Tur ma'lumotlari to'liq emas" });
@@ -502,13 +636,13 @@ try {
     res.json({ success: true, tour: saved });
   });
 
-  app.delete('/api/tours/:id', async (req, res) => {
+  app.delete('/api/tours/:id', requireAdmin, async (req, res) => {
     await deleteTourFromDb(req.params.id);
     res.json({ success: true });
   });
 
   // 3. BUYURTMALAR (BOOKINGS)
-  app.get('/api/bookings', async (req, res) => {
+  app.get('/api/bookings', requireAdmin, async (req, res) => {
     let list = await getAllBookings();
 
     const query = req.query.query ? req.query.query.trim().toLowerCase() : "";
@@ -534,7 +668,8 @@ try {
 
     const results = all.filter(b => {
       const matchId = b.id && b.id.toLowerCase() === q;
-      const matchPhone = cleanQ.length >= 7 && b.guestPhone && b.guestPhone.replace(/\D/g, '').includes(cleanQ);
+      // Telefon bo'yicha faqat to'liq raqam (kamida 9 ta oxirgi raqam) mos kelsa — begona buyurtmalarni topib bo'lmasin
+      const matchPhone = cleanQ.length >= 9 && b.guestPhone && b.guestPhone.replace(/\D/g, '').endsWith(cleanQ);
       const matchEmail = (b.guestEmail && b.guestEmail.toLowerCase() === q) || (b.email && b.email.toLowerCase() === q);
       return matchId || matchPhone || matchEmail;
     }).map(b => ({
@@ -556,19 +691,22 @@ try {
 
   // Yangi buyurtma qabul qilish (Public POST)
   app.post('/api/bookings', async (req, res) => {
-    const data = req.body;
+    const data = sanitizePublicBooking(req.body);
 
     if (!data.guestName || !data.guestPhone) {
       return res.status(400).json({ error: "Ism va telefon raqami talab qilinadi" });
     }
 
-    const bookingId = data.id || `BK-${Math.floor(100000 + Math.random() * 900000)}`;
+    // ID, holat va vaqtni faqat server belgilaydi: mijoz mavjud buyurtmani ustidan yoza olmasin
+    // yoki o'z buyurtmasini "Tasdiqlandi" qilib yubora olmasin.
+    const bookingId = generateBookingId(await getAllBookings());
     const newBooking = {
       ...data,
       id: bookingId,
-      status: data.status || "Kutilmoqda",
-      createdAt: data.createdAt || new Date().toISOString()
+      status: "Yangi",
+      createdAt: new Date().toISOString()
     };
+    delete newBooking.updatedAt;
 
     await saveBookingToDb(newBooking);
 
@@ -577,25 +715,26 @@ try {
     const tg = settings && settings.telegram ? settings.telegram : {};
     if (tg.enabled && tg.botToken && tg.chatId) {
       const sumFormatted = new Intl.NumberFormat('uz-UZ').format(newBooking.totalPrice || 0);
-      const tgText = 
+      const e = escapeTgHtml;
+      const tgText =
 `🔔 <b>YANGI ARIZA TUSHDI!</b> (Aureon Travel)
 
-📋 <b>ID:</b> #${newBooking.id}
-👤 <b>Mijoz:</b> ${newBooking.guestName}
-📞 <b>Telefon:</b> ${newBooking.guestPhone}
-📧 <b>Email:</b> ${newBooking.guestEmail || newBooking.email || '-'}
-📍 <b>Manzil:</b> ${newBooking.pickupLocation || newBooking.roomNumber || '-'}
+📋 <b>ID:</b> #${e(newBooking.id)}
+👤 <b>Mijoz:</b> ${e(newBooking.guestName)}
+📞 <b>Telefon:</b> ${e(newBooking.guestPhone)}
+📧 <b>Email:</b> ${e(newBooking.guestEmail || newBooking.email || '-')}
+📍 <b>Manzil:</b> ${e(newBooking.pickupLocation || newBooking.roomNumber || '-')}
 
-🗺 <b>Tur:</b> ${newBooking.tourTitleLocalized || newBooking.tourTitle || '-'}
-📅 <b>Sana:</b> ${newBooking.startDate} | 🕒 ${newBooking.startTime || '09:00'}
-⏳ <b>Davomiyligi:</b> ${newBooking.durationDays} kun (${newBooking.nights || 0} kecha)
-👥 <b>Odamlar:</b> ${newBooking.adults} nafar katta, ${newBooking.children || 0} nafar bola
-🏨 <b>Otel:</b> ${newBooking.hotelOption || '-'}
-🗣 <b>Gid:</b> ${newBooking.guideOption || '-'} (${newBooking.guideLanguage || 'uz'})
-💬 <b>Izoh:</b> ${newBooking.guestNote || "Yo'q"}
+🗺 <b>Tur:</b> ${e(newBooking.tourTitleLocalized || newBooking.tourTitle || '-')}
+📅 <b>Sana:</b> ${e(newBooking.startDate)} | 🕒 ${e(newBooking.startTime || '09:00')}
+⏳ <b>Davomiyligi:</b> ${e(newBooking.durationDays)} kun (${e(newBooking.nights || 0)} kecha)
+👥 <b>Odamlar:</b> ${e(newBooking.adults)} nafar katta, ${e(newBooking.children || 0)} nafar bola
+🏨 <b>Otel:</b> ${e(newBooking.hotelOption || '-')}
+🗣 <b>Gid:</b> ${e(newBooking.guideOption || '-')} (${e(newBooking.guideLanguage || 'uz')})
+💬 <b>Izoh:</b> ${e(newBooking.guestNote || newBooking.note || "Yo'q")}
 
 💰 <b>Jami hisob:</b> <b>${sumFormatted} so'm</b>
-📌 <b>Holati:</b> ⏳ Kutilmoqda`;
+📌 <b>Holati:</b> ⏳ Yangi`;
 
       sendTelegramMessage(tg.botToken, tg.chatId, tgText).catch(e => console.error("TG xatolik:", e));
     }
@@ -604,9 +743,12 @@ try {
   });
 
   // Buyurtma holatini yangilash (Admin PATCH)
-  app.patch('/api/bookings/:id/status', async (req, res) => {
+  app.patch('/api/bookings/:id/status', requireAdmin, async (req, res) => {
     const { status } = req.body;
     const bId = req.params.id;
+    if (typeof status !== 'string' || !status.trim() || status.length > 50) {
+      return res.status(400).json({ error: "Holat noto'g'ri" });
+    }
 
     const booking = await updateBookingStatusInDb(bId, status);
     if (!booking) {
@@ -618,18 +760,19 @@ try {
     const tg = settings && settings.telegram ? settings.telegram : {};
     if (tg.enabled && tg.botToken && tg.chatId) {
       const statusIcon = status === "Tasdiqlandi" ? "✅" : status === "Bekor qilindi" ? "❌" : "⏳";
-      const tgText = 
+      const e = escapeTgHtml;
+      const tgText =
 `${statusIcon} <b>BUYURTMA HOLATI O'ZGARDI</b>
 
-📋 <b>ID:</b> #${booking.id}
-👤 <b>Mijoz:</b> ${booking.guestName}
-📞 <b>Tel:</b> ${booking.guestPhone}
-📧 <b>Email:</b> ${booking.guestEmail || booking.email || '-'}
-🗺 <b>Tur:</b> ${booking.tourTitleLocalized || booking.tourTitle}
-📅 <b>Sana:</b> ${booking.startDate} (${booking.startTime || '09:00'})
-📍 <b>Olib ketish:</b> ${booking.pickupLocation || booking.roomNumber || '-'}
+📋 <b>ID:</b> #${e(booking.id)}
+👤 <b>Mijoz:</b> ${e(booking.guestName)}
+📞 <b>Tel:</b> ${e(booking.guestPhone)}
+📧 <b>Email:</b> ${e(booking.guestEmail || booking.email || '-')}
+🗺 <b>Tur:</b> ${e(booking.tourTitleLocalized || booking.tourTitle)}
+📅 <b>Sana:</b> ${e(booking.startDate)} (${e(booking.startTime || '09:00')})
+📍 <b>Olib ketish:</b> ${e(booking.pickupLocation || booking.roomNumber || '-')}
 
-📌 <b>Yangi status:</b> <b>${status}</b>
+📌 <b>Yangi status:</b> <b>${e(status)}</b>
 🕒 <b>Vaqti:</b> ${new Date().toLocaleTimeString()}`;
 
       sendTelegramMessage(tg.botToken, tg.chatId, tgText).catch(e => console.error("TG xatolik:", e));
@@ -639,7 +782,7 @@ try {
   });
 
   // Buyurtmani o'chirish
-  app.delete('/api/bookings/:id', async (req, res) => {
+  app.delete('/api/bookings/:id', requireAdmin, async (req, res) => {
     await deleteBookingFromDb(req.params.id);
     res.json({ success: true });
   });
@@ -653,19 +796,21 @@ try {
     });
   });
 
-  app.get('/api/settings/admin', async (req, res) => {
+  app.get('/api/settings/admin', requireAdmin, async (req, res) => {
     const s = await getSettingsFromDb();
-    res.json(s || {});
+    res.json(withoutSecrets(s));
   });
 
-  app.post('/api/settings', async (req, res) => {
-    const newSettings = req.body;
+  app.post('/api/settings', requireAdmin, async (req, res) => {
+    const newSettings = { ...(req.body || {}) };
+    // Parol bu yerdan o'zgartirilmaydi (ADMIN_PASSWORD muhit o'zgaruvchisi orqali)
+    delete newSettings.adminPassword;
     const updated = await saveSettingsToDb(newSettings);
-    res.json({ success: true, settings: updated });
+    res.json({ success: true, settings: withoutSecrets(updated) });
   });
 
   // Telegram ulanishini test qilish
-  app.post('/api/telegram/test', async (req, res) => {
+  app.post('/api/telegram/test', requireAdmin, async (req, res) => {
     const { botToken, chatId } = req.body;
     if (!botToken || !chatId) {
       return res.status(400).json({ error: "Token yoki Chat ID kiritilmagan" });
@@ -682,7 +827,7 @@ try {
   });
 
   // Mijozga Email yuborish (Admin POST)
-  app.post('/api/send-email', async (req, res) => {
+  app.post('/api/send-email', requireAdmin, async (req, res) => {
     const { to, subject, message, bookingId, smtpConfig } = req.body;
     if (!to || !subject || !message) {
       return res.status(400).json({ error: "Qabul qiluvchi email, mavzu va xat matni kiritilishi shart" });
@@ -711,7 +856,7 @@ try {
   });
 
   // Email (SMTP) ulanishini test qilish
-  app.post('/api/email/test', async (req, res) => {
+  app.post('/api/email/test', requireAdmin, async (req, res) => {
     const { testEmail, smtpConfig } = req.body;
     if (!testEmail) {
       return res.status(400).json({ error: "Test uchun email manzili kiritilmadi" });
@@ -737,15 +882,36 @@ try {
 
   // Admin login tekshirish
   app.post('/api/admin/login', async (req, res) => {
-    const { password } = req.body;
-    const s = await getSettingsFromDb();
-    const correctPassword = s.adminPassword || "admin";
+    const ip = getClientIp(req);
+    if (isLoginBlocked(ip)) {
+      return res.status(429).json({ success: false, error: "Juda ko'p noto'g'ri urinish. 15 daqiqadan keyin qayta urinib ko'ring." });
+    }
 
-    if (password === correctPassword) {
-      res.json({ success: true, token: "aureon_admin_session_" + Date.now() });
+    const password = typeof (req.body || {}).password === 'string' ? req.body.password : '';
+    const s = await getSettingsFromDb();
+    const correctPassword = process.env.ADMIN_PASSWORD || s.adminPassword || DEFAULT_ADMIN_PASSWORD;
+
+    // Standart "admin" paroli bilan faqat shu kompyuterdan (localhost) kirish mumkin.
+    // Internetga joylashtirilganda ADMIN_PASSWORD o'rnatilishi shart.
+    if (correctPassword === DEFAULT_ADMIN_PASSWORD && !isLocalRequest(req)) {
+      return res.status(403).json({
+        success: false,
+        error: "Standart parol bilan internet orqali kirish taqiqlangan. Serverda ADMIN_PASSWORD muhit o'zgaruvchisini o'rnating."
+      });
+    }
+
+    if (password && safeEqual(password, correctPassword)) {
+      loginFailures.delete(ip);
+      res.json({ success: true, token: createAdminToken(), expiresInMs: SESSION_TTL_MS });
     } else {
+      recordLoginFailure(ip);
       res.status(401).json({ success: false, error: "Parol noto'g'ri" });
     }
+  });
+
+  // Noma'lum API manzillari uchun JSON 404 (index.html qaytarmaslik uchun)
+  app.all('/api/*', (req, res) => {
+    res.status(404).json({ error: "API manzili topilmadi" });
   });
 
   // SPA fallback
@@ -768,6 +934,12 @@ if (app) {
       console.log(`  👉 Bosh sahifa: http://localhost:${PORT}/index.html`);
       console.log(`  👉 Admin panel: http://localhost:${PORT}/admin.html`);
       console.log("==================================================");
+      getSettingsFromDb().then(s => {
+        if (!process.env.ADMIN_PASSWORD && (!s.adminPassword || s.adminPassword === DEFAULT_ADMIN_PASSWORD)) {
+          console.warn("⚠️  Admin paroli standart (\"admin\"). Unga faqat shu kompyuterdan kirish mumkin.");
+          console.warn("   Internetga joylashtirishdan oldin ADMIN_PASSWORD muhit o'zgaruvchisini o'rnating.");
+        }
+      }).catch(() => {});
     });
   });
 }
