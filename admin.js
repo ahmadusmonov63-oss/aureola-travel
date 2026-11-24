@@ -121,6 +121,9 @@ async function syncDataWithBackend() {
           saveExchangeRate(s.exchangeRate);
           updateRateDisplay();
         }
+        if (s.contact) {
+          saveContactInfo(s.contact);
+        }
         if (s.telegram && (s.telegram.botToken || s.telegram.chatId)) {
           saveTelegramConfig(s.telegram);
           setupTelegramConfig();
@@ -151,7 +154,7 @@ function updateStats() {
 }
 
 function switchTab(tabId) {
-  const tabs = ["tab-bookings", "tab-tours", "tab-telegram", "tab-currency", "tab-backup"];
+  const tabs = ["tab-bookings", "tab-tours", "tab-telegram", "tab-currency", "tab-contact", "tab-backup"];
   tabs.forEach(id => {
     const el = document.getElementById(id);
     const btn = document.getElementById(`btn-${id}`);
@@ -178,6 +181,9 @@ function switchTab(tabId) {
   }
   if (tabId === "tab-backup") {
     loadBackupStatus();
+  }
+  if (tabId === "tab-contact") {
+    loadContactForm();
   }
 }
 
@@ -538,7 +544,7 @@ function updateStatusModalMessage() {
 💰 Итоговая стоимость: ${formatCurrency(b.totalPrice, "ru")}
 
 Наш представитель и комфортабельный персональный трансфер встретят вас в назначенное время в указанном месте.
-По любым вопросам мы всегда на связи: +998 90 123 45 67
+По любым вопросам мы всегда на связи: ${contactPhoneText()}
 
 Aureon Travel — Ваш надежный спутник в путешествиях! ✈️`;
     } else if (clientLang === "en") {
@@ -558,7 +564,7 @@ Your tour booking for "${tourTitle}" with Aureon Travel is CONFIRMED! ✅
 💰 Total Price: ${formatCurrency(b.totalPrice, "en")}
 
 Our representative and comfortable private transfer will meet you at the scheduled time and location.
-If you have any questions, feel free to contact us: +998 90 123 45 67
+If you have any questions, feel free to contact us: ${contactPhoneText()}
 
 Aureon Travel — Your reliable travel companion! ✈️`;
     } else {
@@ -578,7 +584,7 @@ Aureon Travel orqali "${tourTitle}" turiga bergan arizangiz TASDIQLANDI! ✅
 💰 Jami hisob: ${formatCurrency(b.totalPrice, "uz")}
 
 Bizning vakilimiz va qulay shaxsiy transportimiz belgilangan vaqtda siz ko'rsatgan manzildan kutib oladi.
-Savollaringiz bo'lsa, istalgan vaqtda yozishingiz mumkin: +998 90 123 45 67
+Savollaringiz bo'lsa, istalgan vaqtda yozishingiz mumkin: ${contactPhoneText()}
 
 Aureon Travel — Sayohatlaringizning ishonchli hamrohi! ✈️`;
     }
@@ -592,7 +598,7 @@ Aureon Travel — Sayohatlaringizning ishonchli hamrohi! ✈️`;
 Причина: ${reasonText}
 
 Вы можете выбрать другие доступные даты или связаться с нашим оператором для подбора альтернативного маршрута.
-Контакты: +998 90 123 45 67
+Контакты: ${contactPhoneText()}
 
 С уважением, Aureon Travel ✈️`;
     } else if (clientLang === "en") {
@@ -604,7 +610,7 @@ We regret to inform you that your booking for "${tourTitle}" (ID: ${b.id}) has b
 Reason: ${reasonText}
 
 You can choose other available dates or contact our manager for an alternative route.
-Contact: +998 90 123 45 67
+Contact: ${contactPhoneText()}
 
 Best regards, Aureon Travel ✈️`;
     } else {
@@ -616,7 +622,7 @@ Aureon Travel orqali "${tourTitle}" turiga bergan arizangiz (${b.id}) afsuski be
 Sabab: ${reasonText}
 
 Boshqa qulay sanalar yoki muqobil turlarni tanlash uchun operatorimiz bilan bog'lanishingiz mumkin.
-Bog'lanish uchun: +998 90 123 45 67
+Bog'lanish uchun: ${contactPhoneText()}
 
 Hurmat bilan, Aureon Travel ✈️`;
     }
@@ -1576,7 +1582,7 @@ function generateConciergeWeatherMessage(b, w, lang) {
 ${advice}
 
 Наш представитель и персональный комфортный трансфер встретят вас в назначенное время.
-По любым вопросам мы всегда на связи: +998 90 123 45 67
+По любым вопросам мы всегда на связи: ${contactPhoneText()}
 
 Aureon Travel — Ваш надежный спутник в путешествиях! ✈️`;
   }
@@ -1599,7 +1605,7 @@ The Aureon Travel concierge team is preparing for your upcoming "${tourTitle}" t
 ${advice}
 
 Our comfortable private transfer will meet you at the scheduled time and location.
-If you have any questions, feel free to contact us: +998 90 123 45 67
+If you have any questions, feel free to contact us: ${contactPhoneText()}
 
 Aureon Travel — Your reliable travel companion! ✈️`;
   }
@@ -1622,7 +1628,7 @@ Aureon Travel konsyerj jamoasi sizning "${tourTitle}" turingizga tayyorgarlik ko
 ${advice}
 
 Bizning qulay shaxsiy transportimiz belgilangan vaqtda eshigingiz oldida tayyor bo'ladi.
-Barcha savollar bo'yicha biz har doim aloqadamiz: +998 90 123 45 67
+Barcha savollar bo'yicha biz har doim aloqadamiz: ${contactPhoneText()}
 
 Aureon Travel — Sayohatlaringizning ishonchli hamrohi! ✈️`;
 }
@@ -1965,8 +1971,8 @@ function applyEmailTemplate(type) {
 - Место встречи: ${pickup}
 
 Пожалуйста, ответьте на это письмо или напишите нам в Telegram / WhatsApp, чтобы подтвердить ваше участие и детали поездки:
-📞 Телефон / WhatsApp: +998 90 123 45 67
-✈️ Telegram: @aureon_travel
+📞 Телефон / WhatsApp: ${contactPhoneText()}
+✈️ Telegram: ${contactTelegramText()}
 
 С наилучшими пожеланиями,
 Команда Aureon Travel ✈️`;
@@ -1983,8 +1989,8 @@ Booking Details:
 - Pickup Location: ${pickup}
 
 Please reply to this email or reach out to us so we can finalize your itinerary and pickup arrangements:
-📞 Phone / WhatsApp: +998 90 123 45 67
-✈️ Telegram: @aureon_travel
+📞 Phone / WhatsApp: ${contactPhoneText()}
+✈️ Telegram: ${contactTelegramText()}
 
 Best regards,
 Aureon Travel Concierge Team ✈️`;
@@ -2001,8 +2007,8 @@ Sizning buyurtma tafsilotlaringiz:
 - Olib ketish manzili: ${pickup}
 
 Sayohatni to'liq tasdiqlash va transport hamda gid xizmatini muvofiqlashtirish uchun ushbu xatga javob yozishingizni yoki quyidagi aloqa vositalari orqali bizga xabar berishingizni so'raymiz:
-📞 Telefon / WhatsApp: +998 90 123 45 67
-✈️ Telegram: @aureon_travel
+📞 Telefon / WhatsApp: ${contactPhoneText()}
+✈️ Telegram: ${contactTelegramText()}
 
 Sizga unutilmas sayohat tilaymiz!
 Hurmat bilan, Aureon Travel jamoasi ✈️`;
@@ -2021,7 +2027,7 @@ Hurmat bilan, Aureon Travel jamoasi ✈️`;
 - Итоговая стоимость: ${formatCurrency(b.totalPrice, "ru")}
 
 Наш представитель и трансфер прибудут вовремя.
-Контакты: +998 90 123 45 67
+Контакты: ${contactPhoneText()}
 
 С уважением, Aureon Travel ✈️`;
     } else if (lang === "en") {
@@ -2037,7 +2043,7 @@ Trip Information:
 - Total Price: ${formatCurrency(b.totalPrice, "en")}
 
 Our private transfer and guide will be waiting for you at the appointed time.
-Contact: +998 90 123 45 67
+Contact: ${contactPhoneText()}
 
 Best regards, Aureon Travel ✈️`;
     } else {
@@ -2053,7 +2059,7 @@ Sayohat ma'lumotlari:
 - Jami to'lov: ${formatCurrency(b.totalPrice, "uz")}
 
 Qulay transportimiz va mas'ul xodimimiz belgilangan vaqtda sizni kutib oladi.
-Bog'lanish: +998 90 123 45 67
+Bog'lanish: ${contactPhoneText()}
 
 Hurmat bilan, Aureon Travel ✈️`;
     }
@@ -2070,7 +2076,7 @@ Hurmat bilan, Aureon Travel ✈️`;
 3. Не забудьте зарядные устройства и солнцезащитные очки.
 
 Место сбора: ${pickup}
-По любым вопросам звоните: +998 90 123 45 67
+По любым вопросам звоните: ${contactPhoneText()}
 
 Aureon Travel ✈️`;
     } else if (lang === "en") {
@@ -2085,7 +2091,7 @@ Before Departure Tips:
 3. Bring your camera/smartphone charger and sunglasses.
 
 Meeting location: ${pickup}
-Direct line: +998 90 123 45 67
+Direct line: ${contactPhoneText()}
 
 Aureon Travel ✈️`;
     } else {
@@ -2100,7 +2106,7 @@ Sayohat uchun foydali maslahatlar:
 3. Telefon quvvatlagichi va quyoshdan saqlovchi ko'zoynakni unutmang.
 
 Kutib olish manzili: ${pickup}
-Aloqa: +998 90 123 45 67
+Aloqa: ${contactPhoneText()}
 
 Aureon Travel ✈️`;
     }
@@ -2112,8 +2118,8 @@ Aureon Travel ✈️`;
 Сообщаем, что ваша заявка на тур "${tourTitle}" (ID: ${b.id}) была отменена.
 
 Если у вас возникли вопросы или вы хотите подобрать другие доступные даты, пожалуйста, свяжитесь с нашим отделом бронирования:
-📞 Телефон: +998 90 123 45 67
-✈️ Telegram: @aureon_travel
+📞 Телефон: ${contactPhoneText()}
+✈️ Telegram: ${contactTelegramText()}
 
 С уважением, Aureon Travel ✈️`;
     } else if (lang === "en") {
@@ -2123,8 +2129,8 @@ Aureon Travel ✈️`;
 We regret to inform you that your reservation for "${tourTitle}" (ID: ${b.id}) has been cancelled.
 
 If you would like to reschedule or explore other tour dates, please feel free to reach out to us:
-📞 Phone: +998 90 123 45 67
-✈️ Telegram: @aureon_travel
+📞 Phone: ${contactPhoneText()}
+✈️ Telegram: ${contactTelegramText()}
 
 Best regards, Aureon Travel ✈️`;
     } else {
@@ -2134,8 +2140,8 @@ Best regards, Aureon Travel ✈️`;
 Afsuski, "${tourTitle}" turiga bergan arizangiz (ID: ${b.id}) bekor qilindi.
 
 Boshqa qulay sanalarga ko'chirish yoki muqobil turlarni tanlash uchun operatorimizga murojaat qilishingiz mumkin:
-📞 Telefon: +998 90 123 45 67
-✈️ Telegram: @aureon_travel
+📞 Telefon: ${contactPhoneText()}
+✈️ Telegram: ${contactTelegramText()}
 
 Hurmat bilan, Aureon Travel ✈️`;
     }
@@ -2357,6 +2363,80 @@ async function restoreBackupFromFile() {
     }
   } catch (e) {
     showBackupResult(false, "❌ Serverga ulanib bo'lmadi: " + e.message);
+  } finally {
+    if (btn) btn.disabled = false;
+  }
+}
+
+
+// ==========================================
+// ALOQA MA'LUMOTLARI (telefon, WhatsApp, Telegram)
+// ==========================================
+async function loadContactForm() {
+  const api = getApiUrl("/api/settings/admin");
+  if (api) {
+    try {
+      const res = await fetch(api);
+      if (res.ok) {
+        const s = await res.json();
+        saveContactInfo(s.contact || {});
+      }
+    } catch (e) {}
+  }
+  const c = getContactInfo();
+  const set = (id, v) => { const el = document.getElementById(id); if (el) el.value = v || ""; };
+  set("contact-phone", c.phone);
+  set("contact-whatsapp", c.whatsapp);
+  set("contact-telegram", c.telegram ? "@" + c.telegram : "");
+  updateContactPreview();
+}
+
+function updateContactPreview() {
+  const box = document.getElementById("contact-preview");
+  if (!box) return;
+  const phone = document.getElementById("contact-phone")?.value.trim() || "—";
+  const tgRaw = (document.getElementById("contact-telegram")?.value.trim() || "").replace(/^https?:\/\/(t\.me|telegram\.me)\//i, "").replace(/^@/, "");
+  box.textContent = `📞 Telefon / WhatsApp: ${phone}\n✈️ Telegram: ${tgRaw ? "@" + tgRaw : "—"}`;
+}
+
+async function saveContactForm(e) {
+  if (e) e.preventDefault();
+  const resDiv = document.getElementById("contact-result");
+  const btn = document.getElementById("btn-save-contact");
+  const phone = document.getElementById("contact-phone")?.value.trim() || "";
+  let whatsapp = document.getElementById("contact-whatsapp")?.value.trim() || "";
+  const telegram = document.getElementById("contact-telegram")?.value.trim() || "";
+  const sameAsPhone = document.getElementById("contact-whatsapp-same");
+  if (sameAsPhone && sameAsPhone.checked) whatsapp = phone;
+
+  const api = getApiUrl("/api/settings");
+  if (!api) return;
+  if (btn) btn.disabled = true;
+  try {
+    const res = await fetch(api, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ contact: { phone, whatsapp, telegram } })
+    });
+    if (res.status === 401) return;
+    const data = await res.json().catch(() => ({}));
+    if (resDiv) {
+      resDiv.classList.remove("hidden");
+      if (res.ok) {
+        saveContactInfo((data.settings && data.settings.contact) || { phone, whatsapp, telegram });
+        resDiv.className = "p-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-800 border border-emerald-200";
+        resDiv.textContent = "✅ Saqlandi. Saytda, xat shablonlarida va emaillarda endi shu ma'lumotlar ko'rsatiladi.";
+        loadContactForm();
+      } else {
+        resDiv.className = "p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200";
+        resDiv.textContent = "❌ " + (data.error || `Server xatosi (${res.status})`);
+      }
+    }
+  } catch (err) {
+    if (resDiv) {
+      resDiv.className = "p-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-800 border border-rose-200";
+      resDiv.textContent = "❌ Serverga ulanib bo'lmadi: " + err.message;
+    }
   } finally {
     if (btn) btn.disabled = false;
   }

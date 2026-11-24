@@ -741,6 +741,7 @@ function setBookingLanguage(lang) {
   applyBookingLanguage(lang);
   renderTourCards();
   calculateBookingPrice();
+  renderContactLinks();
 }
 
 function applyBookingLanguage(lang) {

@@ -26,6 +26,7 @@ function setLanguage(lang) {
 
   applyLanguage(lang);
   renderToursGrid(activeTours);
+  renderContactLinks();
 
   // Agar batafsil modal ochiq bo'lsa uni ham yangilash
   const modal = document.getElementById("tour-modal");

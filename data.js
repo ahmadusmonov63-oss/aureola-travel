@@ -1617,6 +1617,10 @@ async function syncExchangeRateFromBackend() {
       const res = await fetch(settingsApi);
       if (res.ok) {
         const s = await res.json();
+        if (s && s.contact) {
+          saveContactInfo(s.contact);
+          renderContactLinks();
+        }
         if (s && s.exchangeRate && Number(s.exchangeRate) > 0) {
           saveExchangeRate(Number(s.exchangeRate));
           return Number(s.exchangeRate);
@@ -1625,6 +1629,80 @@ async function syncExchangeRateFromBackend() {
     } catch (e) {}
   }
   return getExchangeRate();
+}
+
+// ==========================================
+// BIZNES ALOQA MA'LUMOTLARI (telefon, WhatsApp, Telegram)
+// Admin panel → "Aloqa" bo'limida kiritiladi, serverdan /api/settings orqali keladi.
+// ==========================================
+function getContactInfo() {
+  if (typeof window !== "undefined" && window._aureonContact) return window._aureonContact;
+  try {
+    const cached = JSON.parse(localStorage.getItem("aureon_contact") || "null");
+    if (cached) return cached;
+  } catch (e) {}
+  return { phone: "", whatsapp: "", telegram: "" };
+}
+
+function saveContactInfo(contact) {
+  const c = {
+    phone: (contact && contact.phone) || "",
+    whatsapp: (contact && contact.whatsapp) || "",
+    telegram: (contact && contact.telegram) || ""
+  };
+  if (typeof window !== "undefined") window._aureonContact = c;
+  try { localStorage.setItem("aureon_contact", JSON.stringify(c)); } catch (e) {}
+  return c;
+}
+
+// Xat shablonlari uchun: raqam kiritilmagan bo'lsa "—" (namuna raqam hech qachon yuborilmaydi)
+function contactPhoneText() {
+  return getContactInfo().phone || "—";
+}
+function contactTelegramText() {
+  const tg = getContactInfo().telegram;
+  return tg ? "@" + tg : "—";
+}
+
+function escapeHtmlText(value) {
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// Sahifadagi #contact-links bloklariga qo'ng'iroq / WhatsApp / Telegram tugmalarini chiqaradi.
+// Hech narsa kiritilmagan bo'lsa, blok yashirin qoladi.
+function renderContactLinks() {
+  if (typeof document === "undefined") return;
+  const c = getContactInfo();
+  const lang = typeof getSelectedLanguage === "function" ? getSelectedLanguage() : "uz";
+  const title = { uz: "Biz bilan bog'laning", ru: "Свяжитесь с нами", en: "Contact us" }[lang] || "Biz bilan bog'laning";
+  const waDigits = String(c.whatsapp || "").replace(/\D/g, "");
+  const telDigits = String(c.phone || "").replace(/[^\d+]/g, "");
+
+  const links = [];
+  if (telDigits) {
+    links.push(`<a href="tel:${escapeHtmlText(telDigits)}" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold transition-colors"><i class="fa-solid fa-phone text-amber-400"></i><span>${escapeHtmlText(c.phone)}</span></a>`);
+  }
+  if (waDigits) {
+    links.push(`<a href="https://wa.me/${escapeHtmlText(waDigits)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></a>`);
+  }
+  if (c.telegram) {
+    links.push(`<a href="https://t.me/${escapeHtmlText(c.telegram)}" target="_blank" rel="noopener" class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-sky-600 hover:bg-sky-500 text-white font-semibold transition-colors"><i class="fa-brands fa-telegram"></i><span>@${escapeHtmlText(c.telegram)}</span></a>`);
+  }
+
+  document.querySelectorAll("[data-contact-links]").forEach(el => {
+    if (links.length === 0) {
+      el.classList.add("hidden");
+      el.innerHTML = "";
+      return;
+    }
+    el.innerHTML = `<div class="text-xs uppercase tracking-wider text-slate-500 font-bold mb-2">${escapeHtmlText(title)}</div><div class="flex flex-wrap gap-2 text-xs sm:text-sm">${links.join("")}</div>`;
+    el.classList.remove("hidden");
+  });
+}
+
+if (typeof document !== "undefined") {
+  document.addEventListener("DOMContentLoaded", () => renderContactLinks());
 }
 
 function getTourTitle(tourId, lang = getSelectedLanguage()) {

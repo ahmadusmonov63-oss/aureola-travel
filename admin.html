@@ -21,7 +21,7 @@
     }
   </style>
   <!-- Tailwind CSS (oldindan yig'ilgan: npm run build:css) -->
-  <link rel="stylesheet" href="styles.css?v=23ade340">
+  <link rel="stylesheet" href="styles.css?v=fb8a1f4d">
 </head>
 <body class="bg-slate-100 text-slate-800 antialiased font-sans min-h-screen flex flex-col">
 
@@ -145,6 +145,11 @@
       <button onclick="switchTab('tab-currency')" id="btn-tab-currency" class="px-5 py-2.5 rounded-t-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/50">
         <i class="fa-solid fa-dollar-sign text-emerald-600"></i>
         <span>Valyuta Kursi ($ USD)</span>
+      </button>
+
+      <button onclick="switchTab('tab-contact')" id="btn-tab-contact" class="px-5 py-2.5 rounded-t-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/50">
+        <i class="fa-solid fa-address-card text-rose-500"></i>
+        <span>Aloqa</span>
       </button>
 
       <button onclick="switchTab('tab-backup')" id="btn-tab-backup" class="px-5 py-2.5 rounded-t-xl font-semibold text-sm transition-all flex items-center gap-2 text-slate-600 hover:text-slate-900 hover:bg-white/50">
@@ -591,6 +596,55 @@
 
       </div>
 
+    </section>
+
+    <!-- TAB: ALOQA MA'LUMOTLARI -->
+    <section id="tab-contact" class="hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        <form onsubmit="saveContactForm(event)" class="lg:col-span-8 bg-white rounded-2xl p-6 sm:p-8 border border-slate-200 shadow-sm space-y-5">
+          <div class="flex items-center gap-3 border-b border-slate-100 pb-4">
+            <div class="w-12 h-12 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center text-2xl">
+              <i class="fa-solid fa-address-card"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-black text-slate-900">Biznes aloqa ma'lumotlari</h3>
+              <p class="text-xs text-slate-500">Saytning pastki qismida, mijozlarga yuboriladigan xat shablonlarida va emaillarda ko'rsatiladi</p>
+            </div>
+          </div>
+
+          <div>
+            <label for="contact-phone" class="block text-xs font-bold text-slate-700 uppercase mb-1">Telefon raqami</label>
+            <input type="tel" id="contact-phone" oninput="updateContactPreview()" placeholder="+998 90 000 00 00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none">
+          </div>
+
+          <div>
+            <label for="contact-whatsapp" class="block text-xs font-bold text-slate-700 uppercase mb-1">WhatsApp raqami</label>
+            <input type="tel" id="contact-whatsapp" placeholder="+998 90 000 00 00" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <label class="mt-2 inline-flex items-center gap-2 text-xs text-slate-600">
+              <input type="checkbox" id="contact-whatsapp-same" class="rounded"> Telefon raqami bilan bir xil
+            </label>
+          </div>
+
+          <div>
+            <label for="contact-telegram" class="block text-xs font-bold text-slate-700 uppercase mb-1">Telegram (foydalanuvchi nomi)</label>
+            <input type="text" id="contact-telegram" oninput="updateContactPreview()" placeholder="@aureontravel" class="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-mono focus:ring-2 focus:ring-amber-500 focus:outline-none">
+            <p class="text-[11px] text-slate-500 mt-1">@nom yoki https://t.me/nom ko'rinishida yozish mumkin.</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 pt-2">
+            <button type="submit" id="btn-save-contact" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-sm font-bold transition-all">
+              <i class="fa-solid fa-floppy-disk"></i> <span>Saqlash</span>
+            </button>
+          </div>
+          <div id="contact-result" class="hidden"></div>
+        </form>
+
+        <div class="lg:col-span-4 bg-slate-900 text-slate-300 rounded-2xl p-6 space-y-3 text-xs leading-relaxed">
+          <h4 class="text-white font-bold text-sm"><i class="fa-solid fa-eye text-amber-400 mr-1"></i> Xatlarda shunday ko'rinadi</h4>
+          <pre id="contact-preview" class="whitespace-pre-wrap font-mono text-amber-200 bg-slate-800 rounded-xl p-3"></pre>
+          <p>Bo'sh qoldirilgan maydon saytda ko'rsatilmaydi, xatlarda esa "—" chiqadi. Namuna raqamlar mijozlarga hech qachon yuborilmaydi.</p>
+        </div>
+      </div>
     </section>
 
     <!-- TAB 5: ZAXIRA NUSXA (BACKUP) -->
@@ -1241,7 +1295,7 @@
   </script>
 
   <!-- Scripts (v4.0 - Ko'p tilli & Dual Valyuta) -->
-  <script src="data.js?v=4.0"></script>
-  <script src="admin.js?v=4.0"></script>
+  <script src="data.js?v=4.1"></script>
+  <script src="admin.js?v=4.1"></script>
 </body>
 </html>

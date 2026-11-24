@@ -118,6 +118,25 @@ function withoutSecrets(settings) {
 // Parol maydoni bo'sh kelsa, saqlangan parol o'zgarmaydi (admin uni qayta kiritishi shart emas).
 // Server (host) yoki login (user) o'zgarsa va yangi parol berilmasa, eski parol o'chiriladi —
 // aks holda saqlangan parol yangi (begona) serverga yuborilishi mumkin edi.
+// Biznes aloqa ma'lumotlari (telefon, WhatsApp, Telegram): admin paneldan kiritiladi,
+// saytda, xat shablonlarida va emaillarda ko'rsatiladi. Ommaviy ma'lumot — maxfiy emas.
+function normalizeContact(input) {
+  const c = (input && typeof input === 'object') ? input : null;
+  if (!c) return { error: "Aloqa ma'lumotlari noto'g'ri" };
+  const out = {};
+  const phoneRe = /^\+?[0-9][0-9\s()-]{5,24}$/;
+  for (const key of ['phone', 'whatsapp']) {
+    const v = String(c[key] || '').trim();
+    if (v && !phoneRe.test(v)) return { error: key === 'phone' ? "Telefon raqami noto'g'ri" : "WhatsApp raqami noto'g'ri" };
+    out[key] = v;
+  }
+  // Telegram: "@nom", "nom" yoki "https://t.me/nom" -> "nom"
+  let tg = String(c.telegram || '').trim().replace(/^https?:\/\/(t\.me|telegram\.me)\//i, '').replace(/^@/, '');
+  if (tg && !/^[A-Za-z][A-Za-z0-9_]{4,31}$/.test(tg)) return { error: "Telegram foydalanuvchi nomi noto'g'ri" };
+  out.telegram = tg;
+  return { contact: out };
+}
+
 const EMAIL_TEXT_FIELDS = ['host', 'user', 'senderName', 'testEmail'];
 function mergeEmailConfig(input, existing) {
   const prev = (existing && typeof existing === 'object') ? existing : {};
@@ -770,7 +789,7 @@ async function buildBackup() {
     counts: { bookings: bookings.length, tours: tours.length },
     bookings,
     tours,
-    settings: { exchangeRate: settings.exchangeRate }
+    settings: { exchangeRate: settings.exchangeRate, contact: settings.contact }
   };
 }
 
@@ -876,6 +895,7 @@ async function sendEmailMessage({ to, subject, message, html, smtpConfig }) {
   const senderName = emailCfg.senderName || process.env.SMTP_SENDER_NAME || "Aureon Travel";
   const fromEmail = emailCfg.fromEmail || emailCfg.user || emailCfg.smtpUser || process.env.SMTP_FROM || user;
   const isEnabled = emailCfg.enabled !== false;
+  const contactPhone = (settings.contact && settings.contact.phone) || '';
 
   const mailtoUrl = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(message)}`;
 
@@ -928,7 +948,7 @@ async function sendEmailMessage({ to, subject, message, html, smtpConfig }) {
           ${message.replace(/\n/g, '<br>')}
         </div>
         <div style="background: #f8fafc; padding: 16px 24px; text-align: center; border-top: 1px solid #e2e8f0; font-size: 12px; color: #64748b;">
-          © 2026 Aureon Travel. Telefon: +998 90 123 45 67 | <a href="https://aureon-travel.onrender.com" style="color: #d97706;">aureon-travel.onrender.com</a>
+          © 2026 Aureon Travel.${contactPhone ? ` Telefon: ${escapeTgHtml(contactPhone)} |` : ''} <a href="https://aureon-travel.onrender.com" style="color: #d97706;">aureon-travel.onrender.com</a>
         </div>
       </div>
     `;
@@ -1253,7 +1273,8 @@ try {
     const s = await getSettingsFromDb();
     res.json({
       exchangeRate: s.exchangeRate || 12800,
-      telegramEnabled: !!(s.telegram && s.telegram.enabled && s.telegram.botToken)
+      telegramEnabled: !!(s.telegram && s.telegram.enabled && s.telegram.botToken),
+      contact: s.contact || { phone: '', whatsapp: '', telegram: '' }
     });
   });
 
@@ -1267,6 +1288,11 @@ try {
     // Parol bu yerdan o'zgartirilmaydi (ADMIN_PASSWORD muhit o'zgaruvchisi orqali)
     delete newSettings.adminPassword;
     delete newSettings.lastAutoBackupAt;
+    if (newSettings.contact !== undefined) {
+      const c = normalizeContact(newSettings.contact);
+      if (c.error) return res.status(400).json({ error: c.error });
+      newSettings.contact = c.contact;
+    }
     if (newSettings.email !== undefined) {
       if (!newSettings.email || typeof newSettings.email !== 'object') {
         return res.status(400).json({ error: "Email sozlamalari noto'g'ri" });
@@ -1494,7 +1520,7 @@ module.exports = {
   isPgReady: () => isPgConnected,
   _internal: {
     sanitizePublicBooking, validateTour, priceBooking, maskName, csvCell, bookingsToCsv,
-    generateBookingId, createAdminToken, verifyAdminToken, escapeTgHtml, withoutSecrets, mergeEmailConfig,
+    generateBookingId, createAdminToken, verifyAdminToken, escapeTgHtml, withoutSecrets, mergeEmailConfig, normalizeContact,
     buildBackup, sendBackupToTelegram, SESSION_TTL_MS
   }
 };

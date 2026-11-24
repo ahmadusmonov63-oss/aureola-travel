@@ -8,7 +8,7 @@ setupEnv();
 let ctx, base, token;
 
 // Mahalliy soxta SMTP server: kim ulanganini va qaysi login/parol yuborilganini yozib boradi
-const smtp = { port: 0, connections: 0, authLines: [], mails: 0 };
+const smtp = { port: 0, connections: 0, authLines: [], mails: 0, lastMessage: '' };
 let smtpServer;
 
 before(async () => {
@@ -18,11 +18,11 @@ before(async () => {
     let inData = false;
     sock.on('data', (buf) => {
       for (const line of buf.toString().split('\r\n').filter(Boolean)) {
-        if (inData) { if (line === '.') { inData = false; smtp.mails += 1; sock.write('250 OK\r\n'); } continue; }
+        if (inData) { if (line === '.') { inData = false; smtp.mails += 1; smtp.lastMessage = smtp.current; sock.write('250 OK\r\n'); } else { smtp.current += line + '\n'; } continue; }
         const cmd = line.slice(0, 4).toUpperCase();
         if (cmd === 'EHLO' || cmd === 'HELO') sock.write('250-test\r\n250 AUTH PLAIN LOGIN\r\n');
         else if (cmd === 'AUTH') { smtp.authLines.push(line); sock.write('235 ok\r\n'); }
-        else if (cmd === 'DATA') { inData = true; sock.write('354 go\r\n'); }
+        else if (cmd === 'DATA') { inData = true; smtp.current = ''; sock.write('354 go\r\n'); }
         else if (cmd === 'QUIT') { sock.write('221 bye\r\n'); sock.end(); }
         else sock.write('250 OK\r\n');
       }
@@ -116,4 +116,21 @@ test('zaxira faylida SMTP sozlamalari va paroli yo\'q', async () => {
 
 test('email sozlamalarini tokensiz o\'zgartirib bo\'lmaydi', async () => {
   assert.equal((await api(base, 'POST', '/api/settings', { body: { email: { host: 'evil.com', pass: 'x' } } })).status, 401);
+});
+
+// quoted-printable yumshoq qatorlarni birlashtirish
+const plain = (raw) => raw.replace(/=\r?\n/g, '').replace(/=20/g, ' ');
+
+test('email pastki qismida namuna raqam yo\'q; aloqa raqami kiritilsa, u chiqadi', async () => {
+  await api(base, 'POST', '/api/settings', {
+    token, body: { email: { host: '127.0.0.1', port: smtp.port, user: 'info@aureon.uz', pass: 'Parol-2' } }
+  });
+  let r = await api(base, 'POST', '/api/email/test', { token, body: { testEmail: 'a@example.uz' } });
+  assert.equal(r.status, 200, r.text);
+  assert.ok(!plain(smtp.lastMessage).includes('123 45 67'), 'namuna raqam xatda bo\'lmasligi kerak');
+
+  await api(base, 'POST', '/api/settings', { token, body: { contact: { phone: '+998 90 777 77 77' } } });
+  r = await api(base, 'POST', '/api/email/test', { token, body: { testEmail: 'a@example.uz' } });
+  assert.equal(r.status, 200, r.text);
+  assert.ok(plain(smtp.lastMessage).includes('+998 90 777 77 77'), 'aloqa raqami email pastida chiqishi kerak');
 });

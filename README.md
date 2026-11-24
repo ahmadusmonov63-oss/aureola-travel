@@ -44,16 +44,19 @@ npm start
 
 Node.js 22 kerak (Render ham shu versiyani ishlatadi, `package.json` dagi `engines`); yangiroq versiyalarda ham ishlaydi. Lokal rejimda buyurtmalar `data/db.local.json` fayliga yoziladi (u git'ga kirmaydi). `data/db.json` faqat boshlang'ich turlar va sozlamalar uchun.
 
-**Testlar:** `npm test` — 68 ta avtomatik test (taxminan 5 soniya):
+**Testlar:** `npm test` — 76 ta avtomatik test (taxminan 5 soniya):
 - `test/pricing.test.js` — narx formulasi (`pricing.js`; brauzer va server aynan shu faylni ishlatadi) va turlar ma'lumoti;
 - `test/security.test.js` — XSS tozalash, admin token, CSV, buyurtma ID;
 - `test/api.test.js` — haqiqiy server: himoya, buyurtma, narx, cheklovlar, turlar, zaxira/tiklash (lokal JSON rejimi);
 - `test/api-pg.test.js` — xuddi shu narsalar PostgreSQL rejimida (`pg-mem` xotiradagi baza bilan, Supabase kerak emas);
-- `test/email-settings.test.js` — SMTP sozlamalari serverda saqlanishi va parol himoyasi (soxta SMTP server bilan).
+- `test/email-settings.test.js` — SMTP sozlamalari serverda saqlanishi va parol himoyasi (soxta SMTP server bilan);
+- `test/contact.test.js` — aloqa ma'lumotlari va kodda namuna raqam qolmaganligi.
 
 Testlar vaqtinchalik papkada ishlaydi va sizning lokal ma'lumotlaringizga tegmaydi. GitHub'ga har push qilinganda ular avtomatik ishlaydi (**Actions** bo'limi). O'zgartirish kiritgandan keyin, commit qilishdan oldin `npm test` ni ishga tushiring.
 
 **Dizaynni o'zgartirganda:** sahifalar oldindan yig'ilgan `styles.css` dan foydalanadi (Tailwind CDN emas). HTML yoki JS ga yangi Tailwind klass qo'shsangiz, `npm run build:css` ni ishga tushirib, `styles.css` ni ham commit qiling. Sozlamalar: `tailwind.config.js`.
+
+**Aloqa ma'lumotlari:** Admin panel → **Aloqa** bo'limida biznes telefon raqami, WhatsApp va Telegram kiritiladi. Ular sayt sahifalarining pastki qismida (qo'ng'iroq / WhatsApp / Telegram tugmalari), mijozlarga yuboriladigan barcha xat shablonlarida va emaillarda ko'rsatiladi. Kiritilmagan maydon saytda ko'rinmaydi, xatlarda esa "—" chiqadi.
 
 **Email (SMTP):** sozlamalar (Admin panel → Telegram Bot Sozlamalari → Email bo'limi) serverda saqlanadi va istalgan qurilmadan ishlaydi. SMTP paroli brauzerga qaytarilmaydi (maydonda "Saqlangan ✓" ko'rinadi); parolni o'zgartirmasangiz, maydonni bo'sh qoldiring. Server yoki login o'zgarsa, parolni qayta kiriting — saqlangan parol boshqa serverga hech qachon yuborilmaydi. Server sertifikati tekshiriladi; faqat o'z-o'zidan imzolangan sertifikatli shaxsiy SMTP server uchun `SMTP_ALLOW_SELF_SIGNED=true` o'rnating.
 
