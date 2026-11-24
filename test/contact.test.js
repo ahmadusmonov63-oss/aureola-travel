@@ -60,3 +60,11 @@ test('sahifalarda aloqa bloki joyi bor', () => {
     assert.ok(fs.readFileSync(path.join(root, f), 'utf-8').includes('data-contact-links'), f);
   }
 });
+
+test('buyurtmani tekshirish oynasidagi namuna ID yangi formatda (BK- + 8 belgi)', () => {
+  const root = path.join(__dirname, '..');
+  for (const f of ['index.html', 'booking.html', 'data.js', 'app.js', 'booking.js']) {
+    const src = fs.readFileSync(path.join(root, f), 'utf-8');
+    assert.ok(!/BK-\d{6}\b/.test(src), `${f} da eski 6 xonali ID namunasi qolgan`);
+  }
+});
